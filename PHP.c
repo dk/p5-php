@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.4 2005/02/16 14:14:32 dk Exp $
+$Id: PHP.c,v 1.5 2005/02/23 11:13:28 dk Exp $
 */
 #include "PHP.h"
 
@@ -360,6 +360,7 @@ XS(PHP_exec)
 	dPHP_EVAL;
 	STRLEN len;
 	int i, zargc, zobject, as_method;
+	int ret = FAILURE;
 	zval *retval;
 	SV * retsv;
 	
@@ -432,23 +433,24 @@ XS(PHP_exec)
 	/* issue php call */
 	PHP_EVAL_ENTER;
 	TSRMLS_FETCH();
-	if(call_user_function_ex(
-		( as_method ? NULL : CG(function_table)), /* namespace */
-		( as_method ? zargv + 1 : NULL),	  /* object */	
-		zargv[0],			          /* function name */	
-		&retval, 				  /* return zvalue */
-		zargc - 1 - as_method,			  /* param count */ 
-		pargv + 1 + as_method, 			  /* param vector */
-		0, NULL TSRMLS_CC) != SUCCESS)
-	{
+	zend_try {
+		ret = call_user_function_ex(
+			( as_method ? NULL : CG(function_table)), /* namespace */
+			( as_method ? zargv + 1 : NULL),	  /* object */	
+			zargv[0],			          /* function name */	
+			&retval, 				  /* return zvalue */
+			zargc - 1 - as_method,			  /* param count */ 
+			pargv + 1 + as_method, 			  /* param vector */
+			0, NULL TSRMLS_CC);
+	} zend_end_try();
+	PHP_EVAL_LEAVE;
+	if ( ret == FAILURE) {
 		CLEANUP;
-		PHP_EVAL_LEAVE;
 		if ( eval_buf[0])
 			croak("%s", eval_buf);
 		else
 			croak("%s: function %s call failed", METHOD, SvPV(ST(1), len));
 	}
-	PHP_EVAL_LEAVE;
 
 	/* read and parse results */
 	SPAGAIN;
@@ -474,6 +476,7 @@ XS(PHP_exec)
 XS(PHP_eval)
 {
 	dXSARGS;
+	int ret = FAILURE;
 	dPHP_EVAL;
 
 	STRLEN na;
@@ -484,11 +487,12 @@ XS(PHP_eval)
 		croak("PHP::eval: expect 1 parameter");
 	
 	PHP_EVAL_ENTER;
-	if ( zend_eval_string( SvPV( ST(0), na), NULL, "Embedded code" TSRMLS_CC) == FAILURE) {
-		PHP_EVAL_LEAVE;
-		croak( "%s", eval_buf[0] ? eval_buf : "PHP::eval failed");
-	}
+	zend_try {
+		ret = zend_eval_string( SvPV( ST(0), na), NULL, "Embedded code" TSRMLS_CC);
+	} zend_end_try();
 	PHP_EVAL_LEAVE;
+	if ( ret == FAILURE)
+		croak( "%s", eval_buf[0] ? eval_buf : "PHP::eval failed");
 	
 	PUTBACK;
 	XSRETURN_EMPTY;

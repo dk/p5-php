@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.3 2005/02/15 16:11:26 dk Exp $
+#$Id: test.pl,v 1.4 2005/02/23 11:13:28 dk Exp $
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -50,7 +50,7 @@ ok( defined $val && $val eq '42', 'pass arguments, return values');
 eval {
 	PHP::eval('$');
 };
-ok( $@, 'exceptions');
+ok( $@, 'invalid syntax exceptions');
 
 # 7 
 my $output = '';
@@ -91,6 +91,7 @@ PHP::TieHash::STORE( $b, '42', '42');
 ok( PHP::TieHash::FETCH( $b, '42') eq '42', 'direct array access');
 
 # 15
+$output = '';
 my $TestClass = PHP::Object-> new('TestClass', '43');
 ok( $TestClass && $output eq '43', 'class');
 
@@ -101,3 +102,9 @@ ok( $TestClass-> method(42) == 43, 'methods');
 $TestClass->tie(\%hash);
 $hash{prop} = 42;
 ok( $TestClass-> getprop() == 42, 'properties');
+
+# 18
+eval {
+PHP::eval('call_unexistent_function_wekljfhv2kwfwkfvbwkfbvwjkfefv();');
+};
+ok($@ && $@ =~ /call_unexistent_function/, 'undefined function exceptions');
