@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.6 2005/02/28 14:29:36 dk Exp $
+$Id: PHP.c,v 1.7 2005/03/02 09:50:50 dk Exp $
 */
 #include "PHP.h"
 
@@ -571,14 +571,14 @@ XS(PHP_options)
 	XSRETURN_EMPTY;
 }
 
-/* collect php warnings */
+/* process php warnings; save the last warning for the eventual croak */
 static void
 mod_log_message( char * message)
 {
 	if ( eval_ptr) {
-		if ( *eval_ptr)
-			strlcat( eval_ptr, "\n", PHP_EVAL_BUFSIZE);
-		strlcat( eval_ptr, message, PHP_EVAL_BUFSIZE);
+		if ( *eval_ptr && !stderr_hook)
+			warn("%s", eval_ptr);
+		strlcpy( eval_ptr, message, PHP_EVAL_BUFSIZE);
 	}
 
 	if ( stderr_hook) {
