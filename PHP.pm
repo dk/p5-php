@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.10 2005/02/23 11:13:28 dk Exp $
+# $Id: PHP.pm,v 1.11 2005/02/24 10:26:32 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -10,7 +10,7 @@ use vars qw($VERSION @ISA);
 # remove this or change to 0x00 of your OS croaks here
 sub dl_load_flags { 0x01 }
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 bootstrap PHP $VERSION;
 
 PHP::options( debug => 1) if $ENV{P5PHPDEBUG}; 
