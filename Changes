@@ -5,3 +5,6 @@ Revision history for Perl extension PHP.
 
 0.02  15 Feb 2005
 	- implement object properties and parameters to class constructors
+
+0.03  16 Feb 2005
+	- compile with gcc versions below 3.3
