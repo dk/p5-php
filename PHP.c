@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.5 2005/02/23 11:13:28 dk Exp $
+$Id: PHP.c,v 1.6 2005/02/28 14:29:36 dk Exp $
 */
 #include "PHP.h"
 
@@ -450,7 +450,8 @@ XS(PHP_exec)
 			croak("%s", eval_buf);
 		else
 			croak("%s: function %s call failed", METHOD, SvPV(ST(1), len));
-	}
+	} else if ( eval_buf[0])
+		warn("%s", eval_buf);
 
 	/* read and parse results */
 	SPAGAIN;
@@ -491,8 +492,10 @@ XS(PHP_eval)
 		ret = zend_eval_string( SvPV( ST(0), na), NULL, "Embedded code" TSRMLS_CC);
 	} zend_end_try();
 	PHP_EVAL_LEAVE;
-	if ( ret == FAILURE)
+	if ( ret == FAILURE) {
 		croak( "%s", eval_buf[0] ? eval_buf : "PHP::eval failed");
+	} else if ( eval_buf[0])
+		warn("%s", eval_buf);
 	
 	PUTBACK;
 	XSRETURN_EMPTY;
@@ -572,8 +575,11 @@ XS(PHP_options)
 static void
 mod_log_message( char * message)
 {
-	if ( eval_ptr) 
+	if ( eval_ptr) {
+		if ( *eval_ptr)
+			strlcat( eval_ptr, "\n", PHP_EVAL_BUFSIZE);
 		strlcat( eval_ptr, message, PHP_EVAL_BUFSIZE);
+	}
 
 	if ( stderr_hook) {
 		dSP;
