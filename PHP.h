@@ -1,5 +1,5 @@
 /*
-$Id: PHP.h,v 1.1 2005/02/14 16:08:39 dk Exp $
+$Id: PHP.h,v 1.2 2005/02/16 13:46:53 dk Exp $
 */
 
 #ifndef __P5PHP_H__
@@ -42,6 +42,7 @@ extern SV *
 p5PHP_zval2sv( zval * zobj);
 
 
+#undef DEBUG
 #define DEBUG if(opt_debug)debug
 
 #endif
