@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.6 2005/02/15 17:09:14 dk Exp $
+# $Id: PHP.pm,v 1.7 2005/02/16 09:47:03 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -305,6 +305,6 @@ under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Dmitry Karasik <dmitry@karasik.eu.org>
+Dmitry Karasik <dk@catpipe.net>
 
 =cut
