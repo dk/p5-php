@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.1 2005/02/14 16:08:39 dk Exp $
+$Id: PHP.c,v 1.2 2005/02/15 16:11:26 dk Exp $
 */
 #include "PHP.h"
 
@@ -124,6 +124,50 @@ Entity_create( char * class, void * data)
 
 	return obj;
 }
+
+/* instantiate php object from a given class */
+XS(PHP_Object__new)
+{
+	dXSARGS;
+	STRLEN i, len;
+	zval * object;
+	zend_class_entry * 
+#if PHP_MAJOR_VERSION > 4
+		*
+#endif
+		zclass;
+	char *class, *save_class, uclass[2048], *uc;
+
+	if ( items != 2)
+		croak("PHP::Object::new: 2 parameter expected");
+	
+	save_class = class = SvPV( ST( 1), len);
+
+	DEBUG("new '%s'", save_class);
+
+	if ( len > 2047) len = 2047;
+	for ( i = 0, uc = uclass; i < len + 1; i++)
+		*(uc++) = tolower( *(class++));
+
+	if ( zend_hash_find(CG(class_table), uclass, len + 1, (void **) &zclass) == FAILURE)
+		croak("PHP::Object::new: undefined class name '%s'", save_class);
+
+
+	SP -= items;
+
+	MAKE_STD_ZVAL( object);
+
+	object_init_ex( object, 
+#if PHP_MAJOR_VERSION > 4
+		*
+#endif
+		zclass);
+
+	XPUSHs( sv_2mortal( Entity_create( SvPV( ST(0), len), object)));
+	PUTBACK;
+	return;
+}
+
 
 /* map SV into zval */
 zval * 
@@ -642,6 +686,8 @@ XS( boot_PHP)
 	newXS( "PHP::Entity::DESTROY", PHP_Entity_DESTROY, "PHP::Entity");
 	newXS( "PHP::Entity::link", PHP_Entity_link, "PHP::Entity");
 	newXS( "PHP::Entity::unlink", PHP_Entity_unlink, "PHP::Entity");
+	
+	newXS( "PHP::Object::_new", PHP_Object__new, "PHP::Object");
 
 	register_PHP_Array();
 

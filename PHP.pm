@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.4 2005/02/15 11:15:25 dk Exp $
+# $Id: PHP.pm,v 1.5 2005/02/15 16:11:26 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -66,21 +66,12 @@ package PHP::Object;
 use vars qw(@ISA);
 @ISA = qw(PHP::Entity);
 
-my $export__new;
-
 sub new
 {
-	my ( $dummy, $class, @params) = @_;
-	
-	PHP::eval(<<NEW), $export__new = 1
-function __new(\$class)
-{
-	return new \$class;
-}
-NEW
-		unless $export__new;
-	
-	PHP::exec( 0, '__new', $class, @params);
+	my ( $class, $php_class, @params) = @_;
+	my $self = $class-> _new( $php_class);
+	PHP::exec( 1, $php_class, $self, @params);
+	return $self;
 }
 
 sub AUTOLOAD
@@ -206,12 +197,12 @@ Shortcuts to the identical PHP constructs.
 Returns a handle to a newly created PHP array of type C<PHP::Array>.
 The handle can be later tied with perl hashes or arrays via C<tie> call.
 
-=item PHP::Object->new($class_name)
+=item PHP::Object->new($class_name, @parameters)
 
 Instantiates a PHP object of PHP class $class_name and returns a handle to it.
 The methods of the class can be called directly via the handle:
 
-	my $obj = PHP::Object-> new();
+	my $obj = PHP::Object-> new( 'MyClass', @params_to_constructor);
 	$object-> method( @some_params);
 
 

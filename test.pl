@@ -1,4 +1,4 @@
-#$Id: test.pl,v 1.2 2005/02/15 11:04:59 dk Exp $
+#$Id: test.pl,v 1.3 2005/02/15 16:11:26 dk Exp $
 
 use Test::More tests => 17;
 use strict;
@@ -91,8 +91,8 @@ PHP::TieHash::STORE( $b, '42', '42');
 ok( PHP::TieHash::FETCH( $b, '42') eq '42', 'direct array access');
 
 # 15
-my $TestClass = PHP::Object-> new('TestClass');
-ok( $TestClass, 'class');
+my $TestClass = PHP::Object-> new('TestClass', '43');
+ok( $TestClass && $output eq '43', 'class');
 
 # 16
 ok( $TestClass-> method(42) == 43, 'methods');
