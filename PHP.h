@@ -1,5 +1,5 @@
 /*
-$Id: PHP.h,v 1.2 2005/02/16 13:46:53 dk Exp $
+$Id: PHP.h,v 1.3 2005/03/15 18:56:24 dk Exp $
 */
 
 #ifndef __P5PHP_H__
@@ -27,7 +27,7 @@ p5PHP_debug( char * format, ...);
 
 #define Entity_create p5PHP_Entity_create
 extern SV * 
-p5PHP_Entity_create( char * class, void * data);
+p5PHP_Entity_create( char * class, zval * data);
 
 #define get_php_entity p5PHP_get_php_entity
 extern zval * 

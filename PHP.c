@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.10 2005/03/02 15:43:03 dk Exp $
+$Id: PHP.c,v 1.11 2005/03/15 18:56:24 dk Exp $
 */
 #include "PHP.h"
 
@@ -99,7 +99,7 @@ hv_destroy_zval( HV * h, int kill)
 
 /* create a blessed instance of PHP::Entity */
 SV *
-Entity_create( char * class, void * data)
+Entity_create( char * class, zval * data)
 {
 	SV * obj, * mate;
 	dSP;
@@ -116,6 +116,7 @@ Entity_create( char * class, void * data)
 		croak("PHP::Entity::create: something really bad happened");
 	obj = newRV_inc( mate);
 	hv_store_zval( z_objects, mate, data, 1);
+	ZVAL_ADDREF( data);
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
@@ -359,6 +360,7 @@ XS(PHP_Entity_DESTROY)
 			DEBUG("delete link 0x%x", HeKEY( he));
 		}
 	}
+	ZVAL_DELREF( obj);
 	
 	PUTBACK;
 	XSRETURN_EMPTY;
