@@ -1,5 +1,8 @@
 Revision history for Perl extension PHP.
 
+0.06  16 March 2005
+        - return pseudo-hash from array-returning functions
+	
 0.05  2 March 2005
         - implement a pseudo-hash
 
