@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.8 2005/03/02 14:24:28 dk Exp $
+$Id: PHP.c,v 1.9 2005/03/02 14:47:21 dk Exp $
 */
 #include "PHP.h"
 
@@ -313,6 +313,7 @@ XS(PHP_Entity_DESTROY)
 {
 	dXSARGS;
 	zval * obj;
+	HE * he;
 
 	if ( !initialized) /* if called after PHP::done */
 		XSRETURN_EMPTY;
@@ -325,6 +326,19 @@ XS(PHP_Entity_DESTROY)
 
 	DEBUG("delete object 0x%x", obj);
 	hv_delete_zval( z_objects, SvRV( ST(0)), 1);
+
+	/* remove links */
+	hv_iterinit( z_links);
+	for (;;)
+	{
+		if (( he = hv_iternext( z_links)) == NULL) 
+			break;
+		if ( obj == ( zval*) HeVAL( he)) {
+			HeVAL( he) = &PL_sv_undef;
+			hv_delete( z_links, HeKEY( he), HeKLEN( he), G_DISCARD);
+			DEBUG("delete link 0x%x", HeKEY( he));
+		}
+	}
 	
 	PUTBACK;
 	XSRETURN_EMPTY;
