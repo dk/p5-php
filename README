@@ -32,7 +32,7 @@ SYNOPSIS
     Arrays, high level
 
             # create a php array
-            my $array = PHP::hash;
+            my $array = PHP::array;
 
             # access pseudo-hash content
             $array-> [1] = 42;
@@ -46,8 +46,8 @@ SYNOPSIS
 
     Arrays, low level
 
-            # create a php array
-            my $array = PHP::array;
+            # create a php array handle
+            my $array = PHP::ArrayHandle-> new();
             # tie it either to an array or a hash
             my ( @array, %hash);
             $array-> tie(\%hash);
@@ -78,18 +78,17 @@ API
     include, include_once, require, require_once
         Shortcuts to the identical PHP constructs.
 
-    array
-        Returns a handle to a newly created PHP array of type "PHP::Array".
-        The handle can be later tied with perl hashes or arrays via "tie"
-        call.
-
-    hash
-        Returns a handle to a newly created "PHP::PseudoHash" object, which
-        can be accessed both as array and hash reference:
+    array [ $REFERENCE ]
+        Returns a handle to a newly created "PHP::Array" object, which can
+        be accessed both as array and hash reference:
 
                 $_ = PHP::hash;
                 $_->[42] = 'hello';
                 $_->{world} = '!';
+
+        $REFERENCE is a "PHP::ArrayHandle" instance, then the newly created
+        object is a pheudo-hash alias to the PHP array behind the
+        $REFERENCE. If no $REFERENCE is given, a new PHP array is created.
 
     PHP::Object->new($class_name, @parameters)
         Instantiates a PHP object of PHP class $class_name and returns a
@@ -104,9 +103,10 @@ API
         array. The tied hash or array can be used to access PHP pseudo_hash
         values indexed either by string or integer value.
 
-        The PHP entity can be either an array, represented by "PHP::Array",
-        or an object, represented by "PHP::Object". In the latter case, the
-        object properties are represented as hash/array values.
+        The PHP entity can be either an array, represented by
+        "PHP::ArrayHandle", or an object, represented by "PHP::Object". In
+        the latter case, the object properties are represented as hash/array
+        values.
 
     PHP::Entity->link($original, $link)
         Records a reference to an arbitrary perl scalar $link as an alias to
@@ -116,6 +116,12 @@ API
 
     PHP::Entity::unlink($link)
         Removes association between a "PHP::Entity" object and $link.
+
+    PHP::Array->tie($self, $tie_to)
+        Same as PHP::Entity-tie>, but operates on "PHP::Array" objects.
+
+    PHP::Array->handle
+        Returns PHP array handle, a "PHP::ArrayHandle" object.
 
     PHP::options
         Contains set of internal options. If called without parameters,

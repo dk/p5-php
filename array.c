@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.5 2005/03/15 18:08:58 dk Exp $ 
+$Id: array.c,v 1.6 2005/03/16 16:09:33 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -8,14 +8,14 @@ Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
 #include "PHP.h"
 
-XS(PHP_Array_new)
+XS(PHP_ArrayHandle_new)
 {
 	dXSARGS;
 	STRLEN na;
 	zval * array;
 	
 	if ( items != 1)
-		croak("PHP::Array::new: 1 parameter expected");
+		croak("PHP::ArrayHandle::new: 1 parameter expected");
 
 	SP -= items;
 
@@ -428,7 +428,7 @@ XS( PHP_TieArray_FETCHSIZE)
 void
 register_PHP_Array()
 {
-	newXS( "PHP::Array::new", PHP_Array_new, "PHP::Array");
+	newXS( "PHP::ArrayHandle::new", PHP_ArrayHandle_new, "PHP::ArrayHandle");
 
 	newXS( "PHP::TieHash::EXISTS",	PHP_TieHash_EXISTS,	"PHP::TieHash");
 	newXS( "PHP::TieHash::FETCH",	PHP_TieHash_FETCH,	"PHP::TieHash");

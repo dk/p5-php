@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.16 2005/03/09 09:19:18 dk Exp $
+# $Id: PHP.pm,v 1.17 2005/03/16 16:09:33 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -26,8 +26,7 @@ sub require	{ PHP::eval( "require('$_[0]');") }
 sub include_once{ PHP::eval( "include_once('$_[0]');") }
 sub require_once{ PHP::eval( "require_once('$_[0]');") }
 
-sub array	{ PHP::Array-> new() }
-sub hash        { PHP::PseudoHash-> new() }
+sub array       { PHP::Array-> new(shift) }
 
 my $LOADED = 1;
 
@@ -40,7 +39,6 @@ sub AUTOLOAD
 	PHP::exec( 0, $method, @_);
 }
 
-# arrays and objects base class
 package PHP::Entity;
 
 sub CREATE
@@ -59,7 +57,7 @@ sub tie
 	} elsif ( ref( $tie_to) eq 'ARRAY') {
 		tie @$tie_to, 'PHP::TieArray', $self;
 	} else {
-		die "PHP::Array::tie: Can't tie to ", ref($tie_to), "\n";
+		die "PHP::Entity::tie: Can't tie to ", ref($tie_to), "\n";
 	}
 }
 
@@ -84,7 +82,7 @@ sub AUTOLOAD
 	PHP::exec( 1, $method, @_);
 }
 
-package PHP::Array;
+package PHP::ArrayHandle;
 use vars qw(@ISA);
 @ISA = qw(PHP::Entity);
 
@@ -121,40 +119,49 @@ sub UNTIE
 sub EXTEND {}
 sub STORESIZE {}
 
-package PHP::PseudoHash;
+package PHP::Array;
 
-my ( %hash_instances, %array_instances);
+my ( %instances);
 
 use overload 
-	'%{}' => sub { $hash_instances{PHP::stringify($_[0])} },
-	'@{}' => sub { $array_instances{PHP::stringify($_[0])} },
+	'%{}' => sub { $instances{PHP::stringify($_[0])}->[0] },
+	'@{}' => sub { $instances{PHP::stringify($_[0])}->[1] },
 	'""'  => sub { PHP::stringify($_[0]) };
 
 sub new
 {
-	my $class = shift;
-	my $handle = PHP::Array-> new;
-	my $hash_instance = {};
-	my $array_instance = [];
-	my $self = {
-		hash  => $hash_instance,
-		array => $array_instance,
-		handle => $handle,
-	};
-	my $string = PHP::stringify( $self);
-	$hash_instances{$string} = $hash_instance;
-	$array_instances{$string} = $array_instance;
+	my ( $class, $handle) = @_;
+	$handle = PHP::ArrayHandle-> new unless $handle;
+	my ( $self, $hash_instance, $array_instance) = 
+		( {}, {}, []);
+	my $id = PHP::stringify( $self);
+	$instances{$id} = [ $hash_instance, $array_instance, $handle ];
 	tie %$hash_instance, 'PHP::TieHash', $handle;
 	tie @$array_instance, 'PHP::TieArray', $handle;
+	PHP::Entity::link( $handle, $self);
 	bless ( $self, $class);
 	return $self;
 }
 
+sub handle { $instances{"$_[0]"}->[2] }
+
+sub tie
+{
+	my ( $self, $tie_to) = @_;
+	if ( ref( $tie_to) eq 'HASH') {
+		tie %$tie_to, 'PHP::TieHash', $self-> handle;
+	} elsif ( ref( $tie_to) eq 'ARRAY') {
+		tie @$tie_to, 'PHP::TieArray', $self-> handle;
+	} else {
+		die "PHP::Array::tie: Can't tie to ", ref($tie_to), "\n";
+	}
+}
+
 sub DESTROY
 {
-	my $string = PHP::stringify( $_[0]);
-	delete $hash_instances{ $string};
-	delete $array_instances{ $string};
+	my $self = $_[0];
+	PHP::Entity::unlink( $self);
+	delete $instances{ PHP::stringify( $self)};
 }
 
 1;
@@ -200,7 +207,7 @@ General use
 Arrays, high level
 
 	# create a php array
-	my $array = PHP::hash;
+	my $array = PHP::array;
 
 	# access pseudo-hash content
 	$array-> [1] = 42;
@@ -214,8 +221,8 @@ Arrays, high level
 
 Arrays, low level
 
-	# create a php array
-	my $array = PHP::array;
+	# create a php array handle
+	my $array = PHP::ArrayHandle-> new();
 	# tie it either to an array or a hash
 	my ( @array, %hash);
 	$array-> tie(\%hash);
@@ -252,19 +259,18 @@ Returns exactly one value.
 
 Shortcuts to the identical PHP constructs.
 
-=item array
+=item array [ $REFERENCE ]
 
-Returns a handle to a newly created PHP array of type C<PHP::Array>.
-The handle can be later tied with perl hashes or arrays via C<tie> call.
-
-=item hash
-
-Returns a handle to a newly created C<PHP::PseudoHash> object, which 
+Returns a handle to a newly created C<PHP::Array> object, which 
 can be accessed both as array and hash reference:
 
 	$_ = PHP::hash;
 	$_->[42] = 'hello';
 	$_->{world} = '!';
+
+$REFERENCE is a C<PHP::ArrayHandle> instance, then the newly created object
+is a pheudo-hash alias to the PHP array behind the $REFERENCE. If no 
+$REFERENCE is given, a new PHP array is created.
 
 =item PHP::Object->new($class_name, @parameters)
 
@@ -281,7 +287,7 @@ Ties existing handle to a PHP entity to either a perl hash or a perl array.
 The tied hash or array can be used to access PHP pseudo_hash values indexed
 either by string or integer value. 
 
-The PHP entity can be either an array, represented by C<PHP::Array>, or
+The PHP entity can be either an array, represented by C<PHP::ArrayHandle>, or
 an object, represented by C<PHP::Object>. In the latter case, the object 
 properties are represented as hash/array values.
 
@@ -295,6 +301,14 @@ for other purposes.
 =item PHP::Entity::unlink($link)
 
 Removes association between a C<PHP::Entity> object and $link.
+
+=item PHP::Array->tie($self, $tie_to)
+
+Same as L<PHP::Entity->tie>, but operates on C<PHP::Array> objects.
+
+=item PHP::Array->handle
+
+Returns PHP array handle, a C<PHP::ArrayHandle> object.
 
 =item PHP::options
 

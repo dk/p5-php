@@ -1,4 +1,4 @@
-#$Id: test.pl,v 1.7 2005/03/15 18:08:58 dk Exp $
+#$Id: test.pl,v 1.8 2005/03/16 16:09:33 dk Exp $
 
 use Test::More tests => 21;
 use strict;
@@ -63,8 +63,8 @@ my $a = PHP::new_array();
 ok( $a, 'get array from php');
 
 # 9
-my $b = PHP::array();
-ok( $b, 'create array');
+my $b = PHP::ArrayHandle-> new();
+ok( $b, 'create array handle');
 
 my ( @array, %hash);
 $a->tie(\%hash);
@@ -110,7 +110,7 @@ PHP::eval('call_unexistent_function_wekljfhv2kwfwkfvbwkfbvwjkfefv();');
 ok($@ && $@ =~ /call_unexistent_function/, 'undefined function exceptions');
 
 # 19
-my $arr = PHP::hash;
+my $arr = PHP::array;
 $arr->[1] = 42;
 ok( $arr->[1] == 42, 'pseudo-hash, as array');
 
