@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.18 2005/03/16 16:11:29 dk Exp $
+# $Id: PHP.pm,v 1.19 2005/03/17 15:53:29 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -360,10 +360,10 @@ default and croaks upon this line, it is safe to remove the line.
 While I do agree that in general it is absolutely pointless to use PHP
 functionality from within Perl, scenarios where one must connect an existing
 PHP codebase to something else, are not something unusual. Also, this module
-might be handy for people who know PHP but afraid to switch to Perl, or want to
+might be handy for people who know PHP but are afraid of switching to Perl, or want to
 reuse their old PHP code.
 
-Currently, not all PHP functionality is implemented, but OTOH I don't really
+Currently, not all of PHP functionality is implemented, but OTOH I don't really
 expect this module to grow that big, because I believe it is easier to call
 C<PHP::eval> rather than implement all the subtleties of Zend API. There are no
 callbacks to Perl from PHP code, and I don't think these are needed, because
