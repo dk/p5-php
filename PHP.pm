@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.14 2005/03/02 15:43:03 dk Exp $
+# $Id: PHP.pm,v 1.15 2005/03/02 17:11:18 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -237,6 +237,11 @@ Objects and properties
 =head1 API
 
 =over
+
+=item eval $CODE
+
+Feeds embedded PHP interpreter with $CODE, throws an exception on
+failure.
 
 =item call FUNCTION ...
 

@@ -67,6 +67,10 @@ SYNOPSIS
             $hash{new_prop} = 'string';
 
 API
+    eval $CODE
+        Feeds embedded PHP interpreter with $CODE, throws an exception on
+        failure.
+
     call FUNCTION ...
         Calls PHP function with list of parameters. Returns exactly one
         value.
