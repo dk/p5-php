@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.3 2005/02/15 11:04:59 dk Exp $ 
+$Id: array.c,v 1.4 2005/03/15 16:19:41 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -193,7 +193,7 @@ do_zenum(
 	char * key;
 
 	if ( ( rettype = zend_hash_get_current_key_ex( HASH_OF(array), 
-		&key, &klen, &numkey, 0, hpos) == HASH_KEY_NON_EXISTANT)) {
+		&key, &klen, &numkey, 0, hpos)) == HASH_KEY_NON_EXISTANT) {
 		DEBUG( "%s: enum stop", method);
 		return &PL_sv_undef;
 	}

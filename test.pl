@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.5 2005/03/02 15:43:03 dk Exp $
+#$Id: test.pl,v 1.6 2005/03/15 16:19:41 dk Exp $
 
-use Test::More tests => 20;
+use Test::More tests => 21;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -117,4 +117,8 @@ ok( $arr->[1] == 42, 'pseudo-hash, as array');
 # 20
 $arr->{'mm'} = 42;
 ok( $arr->{'mm'} == 42, 'pseudo-hash, as hash');
+
+# 21
+my @k = keys %$arr;
+ok(( 2 == @k and 2 == scalar grep { m/1|mm/ } @k), 'hash keys');
 undef $arr;
