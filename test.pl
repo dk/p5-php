@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.1 2005/02/14 16:08:39 dk Exp $
+#$Id: test.pl,v 1.2 2005/02/15 11:04:59 dk Exp $
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -27,8 +27,10 @@ function print_val(\$arr,\$val)
 
 class TestClass
 {
+	var \$prop;
 	function TestClass (\$a) { echo \$a; }
 	function method(\$val) { return \$val + 1; }
+	function getprop() { return \$this->prop; }
 };
 
 S1
@@ -94,3 +96,8 @@ ok( $TestClass, 'class');
 
 # 16
 ok( $TestClass-> method(42) == 43, 'methods');
+
+# 17
+$TestClass->tie(\%hash);
+$hash{prop} = 42;
+ok( $TestClass-> getprop() == 42, 'properties');

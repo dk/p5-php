@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.2 2005/02/14 17:43:53 dk Exp $
+# $Id: PHP.pm,v 1.3 2005/02/15 11:04:59 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -50,6 +50,18 @@ sub CREATE
 	return $self;
 }
 
+sub tie
+{
+	my ( $self, $tie_to) = @_;
+	if ( ref( $tie_to) eq 'HASH') {
+		tie %$tie_to, 'PHP::TieHash', $self;
+	} elsif ( ref( $tie_to) eq 'ARRAY') {
+		tie @$tie_to, 'PHP::TieArray', $self;
+	} else {
+		die "PHP::Array::tie: Can't tie to ", ref($tie_to), "\n";
+	}
+}
+
 package PHP::Object;
 use vars qw(@ISA);
 @ISA = qw(PHP::Entity);
@@ -82,18 +94,6 @@ sub AUTOLOAD
 package PHP::Array;
 use vars qw(@ISA);
 @ISA = qw(PHP::Entity);
-
-sub tie
-{
-	my ( $self, $tie_to) = @_;
-	if ( ref( $tie_to) eq 'HASH') {
-		tie %$tie_to, 'PHP::TieHash', $self;
-	} elsif ( ref( $tie_to) eq 'ARRAY') {
-		tie @$tie_to, 'PHP::TieArray', $self;
-	} else {
-		die "PHP::Array::tie: Can't tie to ", ref($tie_to), "\n";
-	}
-}
 
 package PHP::TieHash;
 
@@ -206,19 +206,35 @@ Shortcuts to the identical PHP constructs.
 Returns a handle to a newly created PHP array of type C<PHP::Array>.
 The handle can be later tied with perl hashes or arrays via C<tie> call.
 
-=item PHP::Array::tie $array_handle, $tie_to
-
-Ties existing handle to a PHP array to either a perl hash or a perl array.
-The tied hash or array can be used to access PHP pseudo_hash values indexed
-either by string or integer value.
-
-=item PHP::Object::new $class_name
+=item PHP::Object->new($class_name)
 
 Instantiates a PHP object of PHP class $class_name and returns a handle to it.
 The methods of the class can be called directly via the handle:
 
 	my $obj = PHP::Object-> new();
 	$object-> method( @some_params);
+
+
+=item PHP::Entity->tie($array_handle, $tie_to)
+
+Ties existing handle to a PHP entity to either a perl hash or a perl array.
+The tied hash or array can be used to access PHP pseudo_hash values indexed
+either by string or integer value. 
+
+The PHP entity can be either an array, represented by C<PHP::Array>, or
+an object, represented by C<PHP::Object>. In the latter case, the object 
+properties are represented as hash/array values.
+
+=item PHP::Entity->link($original, $link)
+
+Records a reference to an arbitrary perl scalar $link as an
+alias to $original C<PHP::Entity> object. This is used internally
+by C<PHP::TieHash> and C<PHP::TieArray>, but might be also used
+for other purposes.
+
+=item PHP::Entity::unlink($link)
+
+Removes association between a C<PHP::Entity> object and $link.
 
 =item PHP::options
 

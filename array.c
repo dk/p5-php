@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.2 2005/02/14 17:36:17 dk Exp $ 
+$Id: array.c,v 1.3 2005/02/15 11:04:59 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -38,7 +38,7 @@ XS( PHP_TieHash_EXISTS)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvPV( ST(1), klen);
@@ -47,7 +47,7 @@ XS( PHP_TieHash_EXISTS)
 	SP -= items;
 	PUTBACK;
 
-	return XSRETURN_IV( zend_hash_exists( array-> value.ht, key, klen + 1));
+	return XSRETURN_IV( zend_hash_exists( HASH_OF(array), key, klen + 1));
 #undef METHOD
 }
 
@@ -63,7 +63,7 @@ XS( PHP_TieHash_FETCH)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvPV( ST(1), klen);
@@ -71,7 +71,7 @@ XS( PHP_TieHash_FETCH)
 
 	SP -= items;
 
-	if ( zend_hash_find( array-> value.ht, key, klen + 1, (void**) &zobj) == FAILURE) {
+	if ( zend_hash_find( HASH_OF(array), key, klen + 1, (void**) &zobj) == FAILURE) {
 		XPUSHs( &PL_sv_undef);
 		PUTBACK;
 		return;
@@ -102,7 +102,7 @@ XS( PHP_TieHash_STORE)
 	if ( items != 3) 
 		croak("%s: expect 3 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvPV( ST(1), klen);
@@ -117,7 +117,7 @@ XS( PHP_TieHash_STORE)
 	}
 
 	if ( zend_hash_update( 
-		array-> value.ht, key, klen + 1,
+		HASH_OF(array), key, klen + 1,
 		(void *)&zobj, sizeof(zval *), NULL
 		) == FAILURE) {
 		zval_ptr_dtor( &zobj);
@@ -141,7 +141,7 @@ XS( PHP_TieHash_DELETE)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvPV( ST(1), klen);
@@ -150,7 +150,7 @@ XS( PHP_TieHash_DELETE)
 	SP -= items;
 	PUTBACK;
 
-	zend_hash_del( array-> value.ht, key, klen + 1);
+	zend_hash_del( HASH_OF(array), key, klen + 1);
 
 	XSRETURN_EMPTY;
 #undef METHOD
@@ -166,7 +166,7 @@ XS( PHP_TieHash_CLEAR)
 	if ( items != 1) 
 		croak("%s: expect 1 parameter", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	DEBUG("clear 0x%x", array);
@@ -174,7 +174,7 @@ XS( PHP_TieHash_CLEAR)
 	SP -= items;
 	PUTBACK;
 
-	zend_hash_clean( array-> value.ht);
+	zend_hash_clean( HASH_OF(array));
 
 	XSRETURN_EMPTY;
 #undef METHOD
@@ -192,7 +192,7 @@ do_zenum(
 	unsigned long numkey;
 	char * key;
 
-	if ( ( rettype = zend_hash_get_current_key_ex( array-> value.ht, 
+	if ( ( rettype = zend_hash_get_current_key_ex( HASH_OF(array), 
 		&key, &klen, &numkey, 0, hpos) == HASH_KEY_NON_EXISTANT)) {
 		DEBUG( "%s: enum stop", method);
 		return &PL_sv_undef;
@@ -221,7 +221,7 @@ XS( PHP_TieHash_FIRSTKEY)
 	if ( items != 1) 
 		croak("%s: expect 1 parameter", METHOD);
 
-	if (( array = SV2ZARRAY( perl_obj = ST(0))) == NULL)
+	if (( array = SV2ZANY( perl_obj = ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV( perl_obj, na));
 
 	DEBUG("firstkey 0x%x", array);
@@ -231,7 +231,7 @@ XS( PHP_TieHash_FIRSTKEY)
 	hpos = ( HashPosition*) SvPV( hash_position, na);
 	hv_store((HV *) SvRV( perl_obj), "__ENUM__", 8, hash_position, 0);
 
-	zend_hash_internal_pointer_reset_ex( array-> value.ht, hpos); 
+	zend_hash_internal_pointer_reset_ex( HASH_OF(array), hpos); 
 
 	SP -= items;
 
@@ -254,7 +254,7 @@ XS( PHP_TieHash_NEXTKEY)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( perl_obj = ST(0))) == NULL)
+	if (( array = SV2ZANY( perl_obj = ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV( perl_obj, na));
 
 	DEBUG("nextkey 0x%x", array);
@@ -263,7 +263,7 @@ XS( PHP_TieHash_NEXTKEY)
 		croak("%s: Internal inconsistency", METHOD);
 	hpos = ( HashPosition*) SvPV( *hash_position, na);
 	
-	zend_hash_move_forward_ex( array-> value.ht, hpos);
+	zend_hash_move_forward_ex( HASH_OF(array), hpos);
 	
 	SP -= items;
 	XPUSHs( do_zenum( METHOD, array, hpos));
@@ -284,7 +284,7 @@ XS( PHP_TieArray_EXISTS)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvIV( ST(1));
@@ -293,7 +293,7 @@ XS( PHP_TieArray_EXISTS)
 	SP -= items;
 	PUTBACK;
 
-	return XSRETURN_IV( zend_hash_index_exists( array-> value.ht, key));
+	return XSRETURN_IV( zend_hash_index_exists( HASH_OF(array), key));
 #undef METHOD
 }
 
@@ -309,7 +309,7 @@ XS( PHP_TieArray_FETCH)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvIV( ST(1));
@@ -317,7 +317,7 @@ XS( PHP_TieArray_FETCH)
 
 	SP -= items;
 
-	if ( zend_hash_index_find( array-> value.ht, key, (void**) &zobj) == FAILURE) {
+	if ( zend_hash_index_find( HASH_OF(array), key, (void**) &zobj) == FAILURE) {
 		XPUSHs( &PL_sv_undef);
 		PUTBACK;
 		return;
@@ -349,7 +349,7 @@ XS( PHP_TieArray_STORE)
 	if ( items != 3) 
 		croak("%s: expect 3 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvIV( ST(1));
@@ -364,7 +364,7 @@ XS( PHP_TieArray_STORE)
 	}
 
 	if ( zend_hash_index_update( 
-		array-> value.ht, key,
+		HASH_OF(array), key,
 		(void *)&zobj, sizeof(zval *), NULL
 		) == FAILURE) {
 		zval_ptr_dtor( &zobj);
@@ -388,7 +388,7 @@ XS( PHP_TieArray_DELETE)
 	if ( items != 2) 
 		croak("%s: expect 2 parameters", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	key = SvIV( ST(1));
@@ -397,7 +397,7 @@ XS( PHP_TieArray_DELETE)
 	SP -= items;
 	PUTBACK;
 
-	zend_hash_index_del( array-> value.ht, key);
+	zend_hash_index_del( HASH_OF(array), key);
 
 	XSRETURN_EMPTY;
 #undef METHOD
@@ -413,7 +413,7 @@ XS( PHP_TieArray_FETCHSIZE)
 	if ( items != 1) 
 		croak("%s: expect 1 parameter", METHOD);
 
-	if (( array = SV2ZARRAY( ST(0))) == NULL)
+	if (( array = SV2ZANY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
 	DEBUG("fetchsize 0x%x", array);
@@ -421,7 +421,7 @@ XS( PHP_TieArray_FETCHSIZE)
 	SP -= items;
 	PUTBACK;
 
-	XSRETURN_IV( zend_hash_num_elements( array-> value.ht));
+	XSRETURN_IV( zend_hash_num_elements( HASH_OF(array)));
 #undef METHOD
 }
 
