@@ -4,4 +4,4 @@ Revision history for Perl extension PHP.
 	- original version; created by h2xs 1.19
 
 0.02  15 Feb 2005
-	- implement object properties
+	- implement object properties and parameters to class constructors
