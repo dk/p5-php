@@ -1,5 +1,8 @@
 Revision history for Perl extension PHP.
 
+0.05  2 March 2005
+        - implement a pseudo-hash
+
 0.04  24 Feb 2005
 	- catch more exceptions
 
@@ -9,5 +12,5 @@ Revision history for Perl extension PHP.
 0.02  15 Feb 2005
 	- implement object properties and parameters to class constructors
 
-0.01  Sat Feb 12 17:40:19 2005
-	- original version; created by h2xs 1.19
+0.01  12 Feb 2005
+	- original version

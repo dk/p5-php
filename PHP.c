@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.9 2005/03/02 14:47:21 dk Exp $
+$Id: PHP.c,v 1.10 2005/03/02 15:43:03 dk Exp $
 */
 #include "PHP.h"
 
@@ -140,7 +140,7 @@ XS(PHP_Object__new)
 	char *class, *save_class, uclass[2048], *uc;
 
 	if ( items != 2)
-		croak("PHP::Object::new: 2 parameter expected");
+		croak("PHP::Object::new: 2 parameters expected");
 	
 	save_class = class = SvPV( ST( 1), len);
 
@@ -163,6 +163,26 @@ XS(PHP_Object__new)
 	XPUSHs( sv_2mortal( Entity_create( SvPV( ST(0), len), object)));
 	PUTBACK;
 #undef ZCLASSPTR
+
+	return;
+}
+
+XS(PHP_stringify)
+{
+	dXSARGS;
+	SV * sv;
+	char str[32];
+
+	if ( items != 1)
+		croak("PHP::stringify: 1 parameter expected");
+
+	sv = ST(0);
+	if ( !SvROK( sv))
+		croak("PHP::stringify: not a reference passed");
+	sprintf( str, "PHP(0x%x)", (unsigned int) SvRV( sv));
+
+	XPUSHs( sv_2mortal( newSVpv( str, strlen( str))));
+	PUTBACK;
 
 	return;
 }
@@ -719,6 +739,8 @@ XS( boot_PHP)
 	
 	newXS( "PHP::exec", PHP_exec, "PHP");
 	newXS( "PHP::eval", PHP_eval, "PHP");
+	
+	newXS( "PHP::stringify", PHP_stringify, "PHP");
 	
 	newXS( "PHP::Entity::DESTROY", PHP_Entity_DESTROY, "PHP::Entity");
 	newXS( "PHP::Entity::link", PHP_Entity_link, "PHP::Entity");

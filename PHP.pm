@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.13 2005/03/02 14:24:28 dk Exp $
+# $Id: PHP.pm,v 1.14 2005/03/02 15:43:03 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -10,7 +10,7 @@ use vars qw($VERSION @ISA);
 # remove this or change to 0x00 of your OS croaks here
 sub dl_load_flags { 0x01 }
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 bootstrap PHP $VERSION;
 
 PHP::options( debug => 1) if $ENV{P5PHPDEBUG}; 
@@ -27,6 +27,7 @@ sub include_once{ PHP::eval( "include_once('$_[0]');") }
 sub require_once{ PHP::eval( "require_once('$_[0]');") }
 
 sub array	{ PHP::Array-> new() }
+sub hash        { PHP::PseudoHash-> new() }
 
 my $LOADED = 1;
 
@@ -120,6 +121,42 @@ sub UNTIE
 sub EXTEND {}
 sub STORESIZE {}
 
+package PHP::PseudoHash;
+
+my ( %hash_instances, %array_instances);
+
+use overload 
+	'%{}' => sub { $hash_instances{PHP::stringify($_[0])} },
+	'@{}' => sub { $array_instances{PHP::stringify($_[0])} },
+	'""'  => sub { PHP::stringify($_[0]) };
+
+sub new
+{
+	my $class = shift;
+	my $handle = PHP::Array-> new;
+	my $hash_instance = {};
+	my $array_instance = [];
+	my $self = {
+		hash  => $hash_instance,
+		array => $array_instance,
+		handle => $handle,
+	};
+	my $string = PHP::stringify( $self);
+	$hash_instances{$string} = $hash_instance;
+	$array_instances{$string} = $array_instance;
+	tie %$hash_instance, 'PHP::TieHash', $handle;
+	tie @$array_instance, 'PHP::TieArray', $handle;
+	bless ( $self, $class);
+	return $self;
+}
+
+sub DESTROY
+{
+	my $string = PHP::stringify( $_[0]);
+	delete $hash_instances{ $string};
+	delete $array_instances{ $string};
+}
+
 1;
 
 __DATA__
@@ -160,10 +197,25 @@ General use
 	});
 	PHP::eval('echo 42;');
 
-Arrays
+Arrays, high level
 
 	# create a php array
-	my $array = PHP::array();
+	my $array = PHP::hash;
+
+	# access pseudo-hash content
+	$array-> [1] = 42;
+	$array-> {string} = 43;
+	
+	# pass arrays to function
+	# Note - function name is not known by perl in advance, and
+	# is called via AUTOLOAD
+	PHP::print_val($array, 1);
+	PHP::print_val($array, 'string');
+
+Arrays, low level
+
+	# create a php array
+	my $array = PHP::array;
 	# tie it either to an array or a hash
 	my ( @array, %hash);
 	$array-> tie(\%hash);
@@ -172,12 +224,6 @@ Arrays
 	# access array content
 	$array[1] = 42;
 	$hash{2} = 43;
-
-	# pass arrays to function
-	# Note - function name is not known by perl in advance, and
-	# is called via AUTOLOAD
-	PHP::print_val($a, 1);
-	PHP::print_val($a, 2);
 
 Objects and properties
 
@@ -205,6 +251,15 @@ Shortcuts to the identical PHP constructs.
 
 Returns a handle to a newly created PHP array of type C<PHP::Array>.
 The handle can be later tied with perl hashes or arrays via C<tie> call.
+
+=item hash
+
+Returns a handle to a newly created C<PHP::PseudoHash> object, which 
+can be accessed both as array and hash reference:
+
+	$_ = PHP::hash;
+	$_->[42] = 'hello';
+	$_->{world} = '!';
 
 =item PHP::Object->new($class_name, @parameters)
 

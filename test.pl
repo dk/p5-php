@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.4 2005/02/23 11:13:28 dk Exp $
+#$Id: test.pl,v 1.5 2005/03/02 15:43:03 dk Exp $
 
-use Test::More tests => 18;
+use Test::More tests => 20;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -108,3 +108,13 @@ eval {
 PHP::eval('call_unexistent_function_wekljfhv2kwfwkfvbwkfbvwjkfefv();');
 };
 ok($@ && $@ =~ /call_unexistent_function/, 'undefined function exceptions');
+
+# 19
+my $arr = PHP::hash;
+$arr->[1] = 42;
+ok( $arr->[1] == 42, 'pseudo-hash, as array');
+
+# 20
+$arr->{'mm'} = 42;
+ok( $arr->{'mm'} == 42, 'pseudo-hash, as hash');
+undef $arr;
