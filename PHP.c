@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.2 2005/02/15 16:11:26 dk Exp $
+$Id: PHP.c,v 1.3 2005/02/16 13:50:37 dk Exp $
 */
 #include "PHP.h"
 
@@ -499,10 +499,10 @@ XS(PHP_eval)
 XS(PHP_options)
 {
 	dXSARGS;
-	(void)items;
-
-	char * c;
 	STRLEN na;
+	char * c;
+
+	(void)items;
 
 	if ( items > 2) 
 		croak("PHP::options: must be 0, 1, or 2 parameters");
