@@ -29,10 +29,25 @@ SYNOPSIS
             });
             PHP::eval('echo 42;');
 
-    Arrays
+    Arrays, high level
 
             # create a php array
-            my $array = PHP::array();
+            my $array = PHP::hash;
+
+            # access pseudo-hash content
+            $array-> [1] = 42;
+            $array-> {string} = 43;
+        
+            # pass arrays to function
+            # Note - function name is not known by perl in advance, and
+            # is called via AUTOLOAD
+            PHP::print_val($array, 1);
+            PHP::print_val($array, 'string');
+
+    Arrays, low level
+
+            # create a php array
+            my $array = PHP::array;
             # tie it either to an array or a hash
             my ( @array, %hash);
             $array-> tie(\%hash);
@@ -41,12 +56,6 @@ SYNOPSIS
             # access array content
             $array[1] = 42;
             $hash{2} = 43;
-
-            # pass arrays to function
-            # Note - function name is not known by perl in advance, and
-            # is called via AUTOLOAD
-            PHP::print_val($a, 1);
-            PHP::print_val($a, 2);
 
     Objects and properties
 
@@ -69,6 +78,14 @@ API
         Returns a handle to a newly created PHP array of type "PHP::Array".
         The handle can be later tied with perl hashes or arrays via "tie"
         call.
+
+    hash
+        Returns a handle to a newly created "PHP::PseudoHash" object, which
+        can be accessed both as array and hash reference:
+
+                $_ = PHP::hash;
+                $_->[42] = 'hello';
+                $_->{world} = '!';
 
     PHP::Object->new($class_name, @parameters)
         Instantiates a PHP object of PHP class $class_name and returns a
@@ -155,5 +172,5 @@ COPYRIGHT
     under the same terms as Perl itself.
 
 AUTHOR
-    Dmitry Karasik <dmitry@karasik.eu.org>
+    Dmitry Karasik <dk@catpipe.net>
 
