@@ -6,3 +6,4 @@ PHP.c
 PHP.h
 array.c
 test.pl
+META.yml

@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.1 2005/02/14 16:08:39 dk Exp $ 
+$Id: array.c,v 1.2 2005/02/14 17:36:17 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -169,7 +169,7 @@ XS( PHP_TieHash_CLEAR)
 	if (( array = SV2ZARRAY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
-	DEBUG("clear 0x%x->{%s}", array);
+	DEBUG("clear 0x%x", array);
 
 	SP -= items;
 	PUTBACK;
@@ -416,7 +416,7 @@ XS( PHP_TieArray_FETCHSIZE)
 	if (( array = SV2ZARRAY( ST(0))) == NULL)
 		croak("%s: (%s) is not a PHP array", METHOD, SvPV(ST(0), na));
 
-	DEBUG("fetchsize 0x%x->{%s}", array);
+	DEBUG("fetchsize 0x%x", array);
 
 	SP -= items;
 	PUTBACK;

@@ -1,0 +1,8 @@
+name:         PHP
+version:      0.01
+version_from: PHP.pm
+installdirs:  site
+requires:
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17
