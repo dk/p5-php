@@ -1,4 +1,4 @@
-#$Id: test.pl,v 1.6 2005/03/15 16:19:41 dk Exp $
+#$Id: test.pl,v 1.7 2005/03/15 18:08:58 dk Exp $
 
 use Test::More tests => 21;
 use strict;
@@ -120,5 +120,5 @@ ok( $arr->{'mm'} == 42, 'pseudo-hash, as hash');
 
 # 21
 my @k = keys %$arr;
-ok(( 2 == @k and 2 == scalar grep { m/1|mm/ } @k), 'hash keys');
+ok(( 2 == @k and 2 == scalar grep { m/^(1|mm)$/ } @k), 'hash keys');
 undef $arr;

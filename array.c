@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.4 2005/03/15 16:19:41 dk Exp $ 
+$Id: array.c,v 1.5 2005/03/15 18:08:58 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -199,7 +199,7 @@ do_zenum(
 	}
 	
 	if ( rettype == HASH_KEY_IS_STRING) {
-		ret = newSVpvn( key, klen); 
+		ret = newSVpvn( key, klen - 1); 
 		DEBUG( "%s: enum %s", method, key);
 	} else {
 		ret = newSViv( numkey); 
