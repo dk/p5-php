@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.8 2005/02/16 14:16:19 dk Exp $
+# $Id: PHP.pm,v 1.9 2005/02/17 10:13:56 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -70,7 +70,8 @@ sub new
 {
 	my ( $class, $php_class, @params) = @_;
 	my $self = $class-> _new( $php_class);
-	PHP::exec( 1, $php_class, $self, @params);
+	PHP::exec( 1, $php_class, $self, @params)
+		if PHP::TieHash::EXISTS( $self, $php_class);
 	return $self;
 }
 
