@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.5 2005/02/15 16:11:26 dk Exp $
+# $Id: PHP.pm,v 1.6 2005/02/15 17:09:14 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -135,18 +135,17 @@ manipulating PHP arrays, and create PHP objects.
 
 	use PHP;
 
-	# 1 - general use
+General use
 
-	# 1.1
 	# evaluate arbitrary PHP code; exception is thrown
-	# and can be catched via standard eval{}/$@ block 
+	# and can be caught via standard eval{}/$@ block 
 	PHP::eval(<<EVAL);
 	function print_val(\$arr,\$val) {
 		echo \$arr[\$val];
 	}
 	
 	class TestClass {
-		function TestClass () {}
+		function TestClass ( $param ) {}
 		function method(\$val) { return \$val + 1; }
 	};
 	EVAL
@@ -157,7 +156,8 @@ manipulating PHP arrays, and create PHP objects.
 	});
 	PHP::eval('echo 42;');
 
-	# 2 - arrays
+Arrays
+
 	# create a php array
 	my $array = PHP::array();
 	# tie it either to an array or a hash
@@ -175,9 +175,14 @@ manipulating PHP arrays, and create PHP objects.
 	PHP::print_val($a, 1);
 	PHP::print_val($a, 2);
 
-	# 3 - classes
+Objects and properties
+
 	my $TestClass = PHP::Object-> new('TestClass');
 	print $TestClass-> method(42), "\n";
+	
+	$TestClass-> tie(\%hash);
+	# set a property
+	$hash{new_prop} = 'string';
 
 =head1 API
 
@@ -255,20 +260,37 @@ Default: undef
 
 =head1 DEBUGGING
 
-Environment variable C<P5PHPDEBUG> set to 1 turns the debug mode on. The
+Environment variable C<P5PHPDEBUG>, if set to 1, turns the debug mode on. The
 same effect can be achieved programmatically by calling
 
 	PHP::options( debug => 1);
 
 =head1 INSTALLATION
 
-The module uses php-embed SAPI extension to interoprate with PHP interpreter.
+The module uses php-embed SAPI extension to inter-operate with PHP interpreter.
 That means php must be configured with '--enable-embed' parameters prior to
 using the module.
 
 The C<sub dl_load_flags { 0x01 }> code in F<PHP.pm> is required for PHP
-to load correctly its extenstions. If your platform does RTLD_GLOBAL by
+to load correctly its extensions. If your platform does RTLD_GLOBAL by
 default and croaks upon this line, it is safe to remove the line.
+
+=head1 WHY?
+
+While I do agree that in general it is absolutely pointless to use PHP
+functionality from within Perl, scenarios where one must connect an existing
+PHP codebase to something else, are not something unusual. Also, this module
+might be handy for people who know PHP but afraid to switch to Perl, or want to
+reuse their old PHP code.
+
+Currently, not all PHP functionality is implemented, but OTOH I don't really
+expect this module to grow that big, because I believe it is easier to call
+C<PHP::eval> rather than implement all the subtleties of Zend API. There are no
+callbacks to Perl from PHP code, and I don't think these are needed, because
+one thing is to be lazy and not to rewrite PHP code, and another is to make new
+code in PHP that uses Perl when PHP is not enough. As I see it, the latter
+would kill all incentive to switch to Perl, so I'd rather leave callbacks
+unimplemented.
 
 =head1 SEE ALSO
 
