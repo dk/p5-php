@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.1 2005/02/14 16:08:39 dk Exp $ 
+$Id: array.c,v 1.1.1.1 2005/02/14 16:08:39 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
