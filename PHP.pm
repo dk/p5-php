@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.11 2005/02/24 10:26:32 dk Exp $
+# $Id: PHP.pm,v 1.12 2005/02/25 10:14:26 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -130,7 +130,7 @@ PHP - embedded PHP interpreter
 =head1 DESCRIPTION
 
 The module makes it possible to execute PHP code, call PHP functions and methods,
-manipulating PHP arrays, and create PHP objects.
+manipulate PHP arrays, and create PHP objects.
 
 =head1 SYNOPSIS
 

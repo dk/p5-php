@@ -3,7 +3,7 @@ NAME
 
 DESCRIPTION
     The module makes it possible to execute PHP code, call PHP functions and
-    methods, manipulating PHP arrays, and create PHP objects.
+    methods, manipulate PHP arrays, and create PHP objects.
 
 SYNOPSIS
             use PHP;
