@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.15 2005/03/02 17:11:18 dk Exp $
+# $Id: PHP.pm,v 1.16 2005/03/09 09:19:18 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -333,7 +333,9 @@ same effect can be achieved programmatically by calling
 
 The module uses php-embed SAPI extension to inter-operate with PHP interpreter.
 That means php must be configured with '--enable-embed' parameters prior to
-using the module.
+using the module. Also, no '--with-apxs' must be present in to configuration
+agruments either, otherwise the PHP library will be linked with Apache functions,
+and will be unusable from the command line.
 
 The C<sub dl_load_flags { 0x01 }> code in F<PHP.pm> is required for PHP
 to load correctly its extensions. If your platform does RTLD_GLOBAL by

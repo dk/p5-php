@@ -143,7 +143,10 @@ DEBUGGING
 INSTALLATION
     The module uses php-embed SAPI extension to inter-operate with PHP
     interpreter. That means php must be configured with '--enable-embed'
-    parameters prior to using the module.
+    parameters prior to using the module. Also, no '--with-apxs' must be
+    present in to configuration agruments either, otherwise the PHP library
+    will be linked with Apache functions, and will be unusable from the
+    command line.
 
     The "sub dl_load_flags { 0x01 }" code in PHP.pm is required for PHP to
     load correctly its extensions. If your platform does RTLD_GLOBAL by
