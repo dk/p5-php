@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.1 2005/02/14 16:08:39 dk Exp $
+# $Id: PHP.pm,v 1.2 2005/02/14 17:43:53 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -180,7 +180,7 @@ manipulating PHP arrays, and create PHP objects.
 
 	# pass arrays to function
 	# Note - function name is not known by perl in advance, and
-	# is called via DUTOLOAD
+	# is called via AUTOLOAD
 	PHP::print_val($a, 1);
 	PHP::print_val($a, 2);
 
@@ -215,9 +215,10 @@ either by string or integer value.
 =item PHP::Object::new $class_name
 
 Instantiates a PHP object of PHP class $class_name and returns a handle to it.
-The methods of the PHP class can be called directly via the handle:
+The methods of the class can be called directly via the handle:
 
 	my $obj = PHP::Object-> new();
+	$object-> method( @some_params);
 
 =item PHP::options
 
@@ -231,11 +232,12 @@ the associated value.
 =item debug $integer
 
 If set, loads of debugging information are dumped to stderr
+
 Default: 0
 
 =item stdout/stderr $callback
 
-C<stdout> and C<stderr> options define callback that are called
+C<stdout> and C<stderr> options define callbacks that are called
 when PHP decides to print something or complain, respectively.
 
 Default: undef
@@ -246,7 +248,7 @@ Default: undef
 
 =head1 DEBUGGING
 
-Environment variable C<P5PHPDEBUG> is set to 1, turns the debug mode on. The
+Environment variable C<P5PHPDEBUG> set to 1 turns the debug mode on. The
 same effect can be achieved programmatically by calling
 
 	PHP::options( debug => 1);
