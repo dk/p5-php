@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.12 2005/02/25 10:14:26 dk Exp $
+# $Id: PHP.pm,v 1.13 2005/03/02 14:24:28 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -116,6 +116,9 @@ sub UNTIE
 {
 	PHP::Entity::unlink( $_[0] );
 }
+
+sub EXTEND {}
+sub STORESIZE {}
 
 1;
 

@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.7 2005/03/02 09:50:50 dk Exp $
+$Id: PHP.c,v 1.8 2005/03/02 14:24:28 dk Exp $
 */
 #include "PHP.h"
 
@@ -205,14 +205,28 @@ sv2zval( SV * sv, zval * zarg, int suggested_type )
 		int type;
 		
 		if ( suggested_type < 0) {
-			if ( SvIOK( sv))
+			if ( SvIOK( sv)) {
 				type = SVt_IV;
-			else if ( SvNOK( sv)) 
+				DEBUG("%s: sensed IV", "sv2zval");
+			} else if ( SvNOK( sv)) {
 				type = SVt_NV;
-			else if ( SvPOK( sv)) 
+				DEBUG("%s: sensed NV", "sv2zval");
+			} else if ( SvPOK( sv)) {
 				type = SVt_PV;
-			else
+				DEBUG("%s: sensed PV", "sv2zval");
+			} else if ( SvIOKp( sv)) {
+				type = SVt_IV;
+				DEBUG("%s: forcibly sensed IV", "sv2zval");
+			} else if ( SvNOKp( sv)) {
+				type = SVt_NV;
+				DEBUG("%s: forcibly sensed NV", "sv2zval");
+			} else if ( SvPOKp( sv)) {
+				type = SVt_PV;
+				DEBUG("%s: forcibly sensed PV", "sv2zval");
+			} else {
 				type = -1;
+				DEBUG("%s: sensed nothing", "sv2zval");
+			}
 		} else {
 			type = suggested_type; 
 		}
