@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.12 2005/03/16 16:09:33 dk Exp $
+$Id: PHP.c,v 1.13 2005/04/19 12:10:28 dk Exp $
 */
 #include "PHP.h"
 
@@ -52,8 +52,8 @@ hv_store_zval( HV * h, const SV* key, zval* val, int kill_object)
 	he = hv_fetch_ent( h, ksv, 0, 0);
 	if ( he) {
 		zval * z = ( zval *) HeVAL( he);
-		if ( z && kill_object) {
-			DEBUG("%s 0x%x", val ? "replace" : "delete", z);
+		if ( z && kill_object && z-> refcount <= 1) {
+			DEBUG("%s 0x%x %d", val ? "replace" : "delete", z, z-> refcount);
 			zval_ptr_dtor( &z);
 		}
 		HeVAL( he) = &PL_sv_undef;
@@ -89,7 +89,7 @@ hv_destroy_zval( HV * h, int kill)
 		if ( kill) {
 			zval *value = ( zval*) HeVAL( he);
 			DEBUG("force delete 0x%x", value);
-		 	if ( value)
+		 	if ( value && value-> refcount <= 1)
 				zval_ptr_dtor( &value);
 		}
 		HeVAL( he) = &PL_sv_undef;
@@ -367,7 +367,7 @@ XS(PHP_Entity_DESTROY)
 	if (( obj = SV2ZANY( ST(0))) == NULL)
 		croak("PHP::Entity::destroy: not a PHP entity");
 
-	DEBUG("delete object 0x%x", obj);
+	DEBUG("delete object 0x%x refcnt=%d", obj, obj-> refcount);
 	ZVAL_DELREF( obj);
 	hv_delete_zval( z_objects, SvRV( ST(0)), 1);
 
