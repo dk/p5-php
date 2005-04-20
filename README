@@ -140,6 +140,10 @@ API
 
             Default: undef
 
+        version
+            Read-only option; returns the version of PHP library compiled
+            with .
+
 DEBUGGING
     Environment variable "P5PHPDEBUG", if set to 1, turns the debug mode on.
     The same effect can be achieved programmatically by calling
@@ -162,10 +166,10 @@ WHY?
     While I do agree that in general it is absolutely pointless to use PHP
     functionality from within Perl, scenarios where one must connect an
     existing PHP codebase to something else, are not something unusual.
-    Also, this module might be handy for people who know PHP but afraid to
-    switch to Perl, or want to reuse their old PHP code.
+    Also, this module might be handy for people who know PHP but are afraid
+    of switching to Perl, or want to reuse their old PHP code.
 
-    Currently, not all PHP functionality is implemented, but OTOH I don't
+    Currently, not all of PHP functionality is implemented, but OTOH I don't
     really expect this module to grow that big, because I believe it is
     easier to call "PHP::eval" rather than implement all the subtleties of
     Zend API. There are no callbacks to Perl from PHP code, and I don't
@@ -173,6 +177,13 @@ WHY?
     rewrite PHP code, and another is to make new code in PHP that uses Perl
     when PHP is not enough. As I see it, the latter would kill all incentive
     to switch to Perl, so I'd rather leave callbacks unimplemented.
+
+BUGS
+    Objects created from Perl ( via "PHP::Object-"new()> ) didn't get their
+    constructor called if it is defined in PHP5 style, "__construct". The
+    PHP4-defined constructor is called though o.k., and as well PHP5-defined
+    destructor <__destruct> also. To workaround this, instantiate a new
+    object from PHP code and return the new object.
 
 SEE ALSO
     Using Perl code from PHP:
