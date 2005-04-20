@@ -1,13 +1,12 @@
 /*
-$Id: PHP.c,v 1.13 2005/04/19 12:10:28 dk Exp $
+$Id: PHP.c,v 1.14 2005/04/20 15:36:39 dk Exp $
 */
 #include "PHP.h"
 
 int opt_debug = 0;
 
 static int initialized = 0;
-static HV *z_objects = NULL; 	/* SV => zval  */ 
-static HV *z_links = NULL; 	/* SV => zval */ 
+static HV *z_objects = NULL; 	/* SV => zval ; the hash accounts for zrefcount */ 
 static SV *ksv = NULL;		/* local SV for key storage */
 static SV *stdout_hook = NULL;/* if non-null, is a callback for stdout */
 static SV *stderr_hook = NULL;/* if non-null, is a callback for stderr */
@@ -41,19 +40,27 @@ debug( char * format, ...)
 /* use perl hashes to store non-sv values */
 
 /* store and/or delete */
-#define hv_delete_zval(h,key,kill) hv_store_zval(h,key,NULL,kill)
 static void
-hv_store_zval( HV * h, const SV* key, zval* val, int kill_object)
+hv_store_zval( HV * h, const SV* key, zval * val)
 {
 	HE *he;
+
+	if ( val) {
+		ZVAL_ADDREF( val);
+		DEBUG("addref=%d 0x%x", val-> refcount, val);
+	}
 
 	if ( !ksv) ksv = newSV( sizeof( SV*)); 
 	sv_setpvn( ksv, ( char *) &key, sizeof( SV*));           
 	he = hv_fetch_ent( h, ksv, 0, 0);
+	
 	if ( he) {
 		zval * z = ( zval *) HeVAL( he);
-		if ( z && kill_object && z-> refcount <= 1) {
-			DEBUG("%s 0x%x %d", val ? "replace" : "delete", z, z-> refcount);
+		if ( z) {
+			DEBUG("delref=%d %s0x%x", 
+				z-> refcount - 1,
+				z-> refcount > 1 ? "" : "kill ",
+				z);
 			zval_ptr_dtor( &z);
 		}
 		HeVAL( he) = &PL_sv_undef;
@@ -76,9 +83,10 @@ hv_fetch_zval( HV * h, const SV * key)
 
 /* kill the whole hash */
 static void
-hv_destroy_zval( HV * h, int kill)
+hv_destroy_zval( HV * h)
 {
 	HE * he;
+	zval * value;
 
 	hv_iterinit( h);
 	for (;;)
@@ -86,11 +94,10 @@ hv_destroy_zval( HV * h, int kill)
 		if (( he = hv_iternext( h)) == NULL) 
 			break;
 
-		if ( kill) {
-			zval *value = ( zval*) HeVAL( he);
-			DEBUG("force delete 0x%x", value);
-		 	if ( value && value-> refcount <= 1)
-				zval_ptr_dtor( &value);
+		value = ( zval*) HeVAL( he);
+		if ( value) {
+			DEBUG("force delete 0x%x delref=%d", value, value-> refcount - 1);
+			zval_ptr_dtor( &value);
 		}
 		HeVAL( he) = &PL_sv_undef;
 	}
@@ -115,13 +122,12 @@ Entity_create( char * class, zval * data)
 	if ( !mate)
 		croak("PHP::Entity::create: something really bad happened");
 	obj = newRV_inc( mate);
-	hv_store_zval( z_objects, mate, data, 1);
-	ZVAL_ADDREF( data);
+	hv_store_zval( z_objects, mate, data);
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
 	
-	DEBUG("new %s(0x%x), handle=0x%x", class, data, mate);
+	DEBUG("new SV*(0x%x) => %s(0x%x)", mate, class, data);
 
 	return obj;
 }
@@ -203,11 +209,6 @@ get_php_entity( SV * perl_object, int check_type)
 	
 	z = hv_fetch_zval( z_objects, (SV*) obj); 
 
-	if ( !z) {
-		DEBUG("link? SV*(0x%x)", obj);
-		z = hv_fetch_zval( z_links, (SV*) obj); 
-	}
-	
 	if ( z && check_type >= 0 && z-> type != check_type)
 		return NULL;
 	return z;
@@ -280,7 +281,7 @@ sv2zval( SV * sv, zval * zarg, int suggested_type )
 					"sv2zval", SvTYPE( sv), SvPV( sv, len));
 				return 0;
 			}
-			DEBUG("%s: %s %x ref=%d", "sv2zval", 
+			DEBUG("%s: %s 0x%x ref=%d", "sv2zval", 
 				(obj->type == IS_OBJECT) ? "OBJECT" : "ARRAY",
 				obj, 
 				obj-> refcount);
@@ -318,7 +319,7 @@ zval2sv( zval * zobj)
 		DEBUG("%s: STRING %d", "zval2sv", Z_STRVAL( *zobj));
 		return newSVpv( Z_STRVAL( *zobj), Z_STRLEN( *zobj));
 	case IS_ARRAY: 
-		DEBUG("%s: ARRAY %x ref=%d", "zval2sv", zobj, zobj-> refcount);
+		DEBUG("%s: ARRAY 0x%x ref=%d", "zval2sv", zobj, zobj-> refcount);
 		if ( RETURN_PHP_ARRAY_AS_PERL_PSEUDOHASH) {
 			SV * array_handle, * obj;
 			dSP;
@@ -343,10 +344,10 @@ zval2sv( zval * zobj)
 			return Entity_create( "PHP::ArrayHandle", zobj);
 		}
 	case IS_OBJECT:		
-		DEBUG("%s: OBJECT %x ref=%d", "zval2sv", zobj, zobj-> refcount);
+		DEBUG("%s: OBJECT 0x%x ref=%d", "zval2sv", zobj, zobj-> refcount);
 		return Entity_create( "PHP::Object", zobj);
 	default:
-		DEBUG("%s: ENTITY %x type=%i\n", "zval2sv", zobj, zobj->type);
+		DEBUG("%s: ENTITY 0x%x type=%i\n", "zval2sv", zobj, zobj->type);
 		return Entity_create( "PHP::Entity", zobj);
 	}
 }
@@ -356,7 +357,7 @@ XS(PHP_Entity_DESTROY)
 {
 	dXSARGS;
 	zval * obj;
-	HE * he;
+	/* HE * he; */
 
 	if ( !initialized) /* if called after PHP::done */
 		XSRETURN_EMPTY;
@@ -367,22 +368,8 @@ XS(PHP_Entity_DESTROY)
 	if (( obj = SV2ZANY( ST(0))) == NULL)
 		croak("PHP::Entity::destroy: not a PHP entity");
 
-	DEBUG("delete object 0x%x refcnt=%d", obj, obj-> refcount);
-	ZVAL_DELREF( obj);
-	hv_delete_zval( z_objects, SvRV( ST(0)), 1);
-
-	/* remove links */
-	hv_iterinit( z_links);
-	for (;;)
-	{
-		if (( he = hv_iternext( z_links)) == NULL) 
-			break;
-		if ( obj == ( zval*) HeVAL( he)) {
-			HeVAL( he) = &PL_sv_undef;
-			hv_delete( z_links, HeKEY( he), HeKLEN( he), G_DISCARD);
-			DEBUG("delete link 0x%x", HeKEY( he));
-		}
-	}
+	DEBUG("delete object 0x%x", obj);
+	hv_store_zval( z_objects, SvRV( ST(0)), NULL);
 	
 	PUTBACK;
 	XSRETURN_EMPTY;
@@ -403,8 +390,8 @@ XS( PHP_Entity_link)
 	if (( obj = SV2ZANY( ST(0))) == NULL)
 		croak("PHP::Entity::link: not a PHP entity");
 
-	DEBUG("link 0x%x => %x", obj, SvRV( ST( 1)));
-	hv_store_zval( z_links, SvRV( ST(1)), obj, 1);
+	DEBUG("link SV*(0x%x) => 0x%x", SvRV( ST( 1)), obj);
+	hv_store_zval( z_objects, SvRV( ST(1)), obj);
 	
 	PUTBACK;
 	XSRETURN_EMPTY;
@@ -417,8 +404,8 @@ XS( PHP_Entity_unlink)
 	if ( items != 1)
 		croak("PHP::Entity::unlink: 1 parameter expected");
 
-	DEBUG("unlink 0x%x", SvRV( ST( 0)));
-	hv_store_zval( z_links, SvRV( ST( 0)), NULL, 1);
+	DEBUG("unlink SV*(0x%x)", SvRV( ST( 0)));
+	hv_store_zval( z_objects, SvRV( ST( 0)), NULL);
 	
 	PUTBACK;
 	XSRETURN_EMPTY;
@@ -536,8 +523,8 @@ XS(PHP_exec)
 	retsv = sv_2mortal( retsv);
 	XPUSHs( retsv);
 	CLEANUP;
-	if ( retval-> type != IS_OBJECT && retval-> type != IS_ARRAY) 
-		zval_ptr_dtor( &retval);
+	zval_ptr_dtor( &retval);
+	sv_setsv( GvSV( PL_errgv), &PL_sv_undef);
 #undef CLEANUP
 #undef METHOD
 
@@ -593,13 +580,18 @@ XS(PHP_options)
 		PUSHs( sv_2mortal( newSVpv( "debug", 5)));
 		PUSHs( sv_2mortal( newSVpv( "stdout", 6)));
 		PUSHs( sv_2mortal( newSVpv( "stderr", 6)));
+		PUSHs( sv_2mortal( newSVpv( "version", 7)));
 		return;
 	case 1:
 	case 2:
 		c = SvPV( ST(0), na);
 		if ( strcmp( c, "debug") == 0) {
 			if ( items == 1) {
+				SPAGAIN;
+				SP -= items;
 				XPUSHs( sv_2mortal( newSViv( opt_debug)));
+				PUTBACK;
+				return;
 			} else {
 				opt_debug = SvIV( ST( 1));
 			}
@@ -610,6 +602,8 @@ XS(PHP_options)
 			SV ** ptr = ( strcmp( c, "stdout") == 0) ? 
 				&stdout_hook : &stderr_hook;
 			if ( items == 1) {
+				SPAGAIN;
+				SP -= items;
 				if ( *ptr)
 					XPUSHs( sv_2mortal( newSVsv( *ptr)));
 				else
@@ -634,6 +628,16 @@ XS(PHP_options)
 					sv_free( *ptr);
 				*ptr = newSVsv( hook);
 				PUTBACK;
+			}
+		} else if ( strcmp( c, "version") == 0) {
+			if ( items == 1) {
+				SPAGAIN;
+				SP -= items;
+				XPUSHs( sv_2mortal( newSVpv( PHP_VERSION, 0 )));
+				PUTBACK;
+				return;
+			} else {
+				croak("PHP::options: `%s' is a read-only option", c);
 			}
 		} else {
 			croak("PHP::options: unknown option `%s'", c);
@@ -706,10 +710,9 @@ XS(PHP_done)
 
 	initialized = 0;
 
-	hv_destroy_zval( z_links, 0);
-	hv_destroy_zval( z_objects, 1);
+	hv_destroy_zval( z_objects);
 	sv_free( ksv);
-	z_objects = z_links = NULL;
+	z_objects = NULL;
 	ksv = NULL;
 	if ( stdout_hook) {
 		sv_free( stdout_hook);
@@ -756,7 +759,6 @@ XS( boot_PHP)
 
 	/* init our stuff */
 	z_objects = newHV();
-	z_links = newHV();
 	
 	newXS( "PHP::done", PHP_done, "PHP");
 	newXS( "PHP::options", PHP_options, "PHP");

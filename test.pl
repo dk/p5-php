@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.8 2005/03/16 16:09:33 dk Exp $
+#$Id: test.pl,v 1.9 2005/04/20 15:36:39 dk Exp $
 
-use Test::More tests => 21;
+use Test::More tests => 24;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -54,7 +54,7 @@ ok( $@, 'invalid syntax exceptions');
 
 # 7 
 my $output = '';
-PHP::options( stdout => sub { $output = shift; });
+PHP::options( stdout => sub { $output = shift});
 PHP::eval( 'echo 42;');
 ok( $output eq '42', 'catch output');
 
@@ -122,3 +122,21 @@ ok( $arr->{'mm'} == 42, 'pseudo-hash, as hash');
 my @k = keys %$arr;
 ok(( 2 == @k and 2 == scalar grep { m/^(1|mm)$/ } @k), 'hash keys');
 undef $arr;
+
+$output = '';
+SKIP:{
+	skip "php5 required", 3 unless PHP::options('version') =~ /^5/;
+	eval { PHP::eval(<<MOO); };
+class P5 {
+	function __construct() { echo "CREATE"; }
+	function __destruct() { echo "DESTROY"; }
+}
+function p5(){\$a = new P5;return \$a;}
+MOO
+	{
+	my $P5 = PHP::call('p5');
+	ok(!$@ && $P5, 'php5 syntax');
+	ok($output eq 'CREATE', 'php5 constructors');
+	}
+	ok($output eq 'DESTROY', 'php5 destructors');
+}
