@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.6 2005/03/16 16:09:33 dk Exp $ 
+$Id: array.c,v 1.7 2005/04/20 22:14:58 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -24,6 +24,7 @@ XS(PHP_ArrayHandle_new)
 
 	XPUSHs( sv_2mortal( Entity_create( SvPV( ST(0), na), array)));
 	PUTBACK;
+	ZVAL_DELREF( array);
 	return;
 }
 
