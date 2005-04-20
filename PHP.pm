@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.21 2005/04/20 21:56:20 dk Exp $
+# $Id: PHP.pm,v 1.22 2005/04/20 22:20:10 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -271,11 +271,11 @@ Shortcuts to the identical PHP constructs.
 Returns a handle to a newly created C<PHP::Array> object, which 
 can be accessed both as array and hash reference:
 
-	$_ = PHP::hash;
+	$_ = PHP::array;
 	$_->[42] = 'hello';
 	$_->{world} = '!';
 
-$REFERENCE is a C<PHP::ArrayHandle> instance, then the newly created object
+If $REFERENCE is a C<PHP::ArrayHandle> instance, then the newly created object
 is a pheudo-hash alias to the PHP array behind the $REFERENCE. If no 
 $REFERENCE is given, a new PHP array is created.
 
@@ -311,7 +311,7 @@ Removes association between a C<PHP::Entity> object and $link.
 
 =item PHP::Array->tie($self, $tie_to)
 
-Same as L<PHP::Entity->tie>, but operates on C<PHP::Array> objects.
+Same as L<< PHP::Entity->tie >>, but operates on C<PHP::Array> objects.
 
 =item PHP::Array->handle
 

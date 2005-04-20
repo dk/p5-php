@@ -82,12 +82,12 @@ API
         Returns a handle to a newly created "PHP::Array" object, which can
         be accessed both as array and hash reference:
 
-                $_ = PHP::hash;
+                $_ = PHP::array;
                 $_->[42] = 'hello';
                 $_->{world} = '!';
 
-        $REFERENCE is a "PHP::ArrayHandle" instance, then the newly created
-        object is a pheudo-hash alias to the PHP array behind the
+        If $REFERENCE is a "PHP::ArrayHandle" instance, then the newly
+        created object is a pheudo-hash alias to the PHP array behind the
         $REFERENCE. If no $REFERENCE is given, a new PHP array is created.
 
     PHP::Object->new($class_name, @parameters)
@@ -118,7 +118,7 @@ API
         Removes association between a "PHP::Entity" object and $link.
 
     PHP::Array->tie($self, $tie_to)
-        Same as PHP::Entity-tie>, but operates on "PHP::Array" objects.
+        Same as PHP::Entity->tie, but operates on "PHP::Array" objects.
 
     PHP::Array->handle
         Returns PHP array handle, a "PHP::ArrayHandle" object.
