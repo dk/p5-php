@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.14 2005/04/20 15:36:39 dk Exp $
+$Id: PHP.c,v 1.15 2005/04/20 21:56:20 dk Exp $
 */
 #include "PHP.h"
 
@@ -170,6 +170,7 @@ XS(PHP_Object__new)
 	XPUSHs( sv_2mortal( Entity_create( SvPV( ST(0), len), object)));
 	PUTBACK;
 #undef ZCLASSPTR
+	ZVAL_DELREF( object);
 
 	return;
 }

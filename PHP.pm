@@ -1,10 +1,10 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.20 2005/04/20 15:36:39 dk Exp $
+# $Id: PHP.pm,v 1.21 2005/04/20 21:56:20 dk Exp $
 
 use strict;
 require DynaLoader;
-use vars qw($VERSION @ISA);
+use vars qw($VERSION $v5 @ISA);
 @ISA = qw(DynaLoader);
 
 # remove this or change to 0x00 of your OS croaks here
@@ -14,6 +14,7 @@ $VERSION = '0.07';
 bootstrap PHP $VERSION;
 
 PHP::options( debug => 1) if $ENV{P5PHPDEBUG}; 
+$v5 = 1 if PHP::options( 'version') =~ /^(\d+)/ and $1 > 4;
 
 sub END
 {
@@ -69,8 +70,11 @@ sub new
 {
 	my ( $class, $php_class, @params) = @_;
 	my $self = $class-> _new( $php_class);
-	PHP::exec( 1, $php_class, $self, @params)
-		if PHP::exec( 0, 'method_exists', $self, $php_class);
+	if ( PHP::exec( 0, 'method_exists', $self, $php_class)) {
+		PHP::exec( 1, $php_class, $self, @params)
+	} elsif ( $PHP::v5 and PHP::exec( 0, 'method_exists', $self, '__construct')) {
+		PHP::exec( 1, '__construct', $self, @params)
+	}
 	return $self;
 }
 
@@ -378,14 +382,6 @@ one thing is to be lazy and not to rewrite PHP code, and another is to make new
 code in PHP that uses Perl when PHP is not enough. As I see it, the latter
 would kill all incentive to switch to Perl, so I'd rather leave callbacks
 unimplemented.
-
-=head1 BUGS
-
-Objects created from Perl ( via C<PHP::Object->new()> ) didn't get their
-constructor called if it is defined in PHP5 style, C<__construct>. The 
-PHP4-defined constructor is called though o.k., and as well PHP5-defined
-destructor <__destruct> also. To workaround this, instantiate a new object
-from PHP code and return the new object.
 
 =head1 SEE ALSO
 

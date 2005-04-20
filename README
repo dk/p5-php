@@ -178,13 +178,6 @@ WHY?
     when PHP is not enough. As I see it, the latter would kill all incentive
     to switch to Perl, so I'd rather leave callbacks unimplemented.
 
-BUGS
-    Objects created from Perl ( via "PHP::Object-"new()> ) didn't get their
-    constructor called if it is defined in PHP5 style, "__construct". The
-    PHP4-defined constructor is called though o.k., and as well PHP5-defined
-    destructor <__destruct> also. To workaround this, instantiate a new
-    object from PHP code and return the new object.
-
 SEE ALSO
     Using Perl code from PHP:
     <http://www.zend.com/php5/articles/php5-perl.php>

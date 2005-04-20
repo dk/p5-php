@@ -1,4 +1,4 @@
-#$Id: test.pl,v 1.9 2005/04/20 15:36:39 dk Exp $
+#$Id: test.pl,v 1.10 2005/04/20 21:56:20 dk Exp $
 
 use Test::More tests => 24;
 use strict;
@@ -125,7 +125,7 @@ undef $arr;
 
 $output = '';
 SKIP:{
-	skip "php5 required", 3 unless PHP::options('version') =~ /^5/;
+	skip "php5 required", 3 unless PHP::options('version') =~ /^(\d+)/ and $1 > 4;
 	eval { PHP::eval(<<MOO); };
 class P5 {
 	function __construct() { echo "CREATE"; }
@@ -134,7 +134,7 @@ class P5 {
 function p5(){\$a = new P5;return \$a;}
 MOO
 	{
-	my $P5 = PHP::call('p5');
+	my $P5 = PHP::Object-> new('P5');
 	ok(!$@ && $P5, 'php5 syntax');
 	ok($output eq 'CREATE', 'php5 constructors');
 	}
