@@ -1,5 +1,8 @@
 Revision history for Perl extension PHP.
 
+0.07  20 April 2005
+	- re-implement reference counting scheme to fix some memory corruptions 
+
 0.06  16 March 2005
         - return pseudo-hash from array-returning functions
 	
