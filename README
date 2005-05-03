@@ -98,6 +98,11 @@ API
                 my $obj = PHP::Object-> new( 'MyClass', @params_to_constructor);
                 $object-> method( @some_params);
 
+        The relevant class constructor is called, if available, according to
+        PHP specification, that is different between v4 and v5. The v4
+        constructor has identical name with the class name; the v5
+        constructor can also be named "__construct".
+
     PHP::Entity->tie($array_handle, $tie_to)
         Ties existing handle to a PHP entity to either a perl hash or a perl
         array. The tied hash or array can be used to access PHP pseudo_hash

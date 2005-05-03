@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.22 2005/04/20 22:20:10 dk Exp $
+# $Id: PHP.pm,v 1.23 2005/05/03 07:55:23 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -10,7 +10,7 @@ use vars qw($VERSION $v5 @ISA);
 # remove this or change to 0x00 of your OS croaks here
 sub dl_load_flags { 0x01 }
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 bootstrap PHP $VERSION;
 
 PHP::options( debug => 1) if $ENV{P5PHPDEBUG}; 
@@ -287,6 +287,11 @@ The methods of the class can be called directly via the handle:
 	my $obj = PHP::Object-> new( 'MyClass', @params_to_constructor);
 	$object-> method( @some_params);
 
+
+The relevant class constructor is called, if available, according to PHP
+specification, that is different between v4 and v5. The v4 constructor has
+identical name with the class name; the v5 constructor can also be named
+C<__construct>.
 
 =item PHP::Entity->tie($array_handle, $tie_to)
 
