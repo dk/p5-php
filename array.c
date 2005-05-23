@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.8 2005/05/03 07:50:34 dk Exp $ 
+$Id: array.c,v 1.9 2005/05/23 08:23:31 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -426,7 +426,7 @@ XS( PHP_TieArray_FETCHSIZE)
 	SP -= items;
 	PUTBACK;
 
-	XSRETURN_IV( zend_hash_num_elements( HASH_OF(array)));
+	XSRETURN_IV( zend_hash_next_free_element( HASH_OF(array)));
 #undef METHOD
 }
 
