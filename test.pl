@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.10 2005/04/20 21:56:20 dk Exp $
+#$Id: test.pl,v 1.11 2005/05/24 09:54:57 dk Exp $
 
-use Test::More tests => 24;
+use Test::More tests => 27;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -121,7 +121,6 @@ ok( $arr->{'mm'} == 42, 'pseudo-hash, as hash');
 # 21
 my @k = keys %$arr;
 ok(( 2 == @k and 2 == scalar grep { m/^(1|mm)$/ } @k), 'hash keys');
-undef $arr;
 
 $output = '';
 SKIP:{
@@ -140,3 +139,15 @@ MOO
 	}
 	ok($output eq 'DESTROY', 'php5 destructors');
 }
+
+# 25
+ok( scalar( @$arr) == 2, 'sparse arrays');
+
+# 26
+ok( 5 == push (@$arr, qw(1 2 3)), 'push');
+
+# 27
+my $k = 0 || pop @$arr; 
+ok(( 4 == @$arr and '3' eq $k), 'pop');
+
+undef $arr;
