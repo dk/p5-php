@@ -1,5 +1,9 @@
 Revision history for Perl extension PHP.
 
+0.09  24 May 2005
+        - add PUSH/POP for array
+        - fix TieArray::FETCHSIZE
+
 0.08  02 May 2005
 	- support PHPv5 constructors 
 	- fix a memory leak
