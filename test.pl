@@ -1,6 +1,6 @@
-#$Id: test.pl,v 1.11 2005/05/24 09:54:57 dk Exp $
+#$Id: test.pl,v 1.12 2006/12/07 23:38:38 dk Exp $
 
-use Test::More tests => 27;
+use Test::More tests => 29;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -151,3 +151,16 @@ my $k = 0 || pop @$arr;
 ok(( 4 == @$arr and '3' eq $k), 'pop');
 
 undef $arr;
+
+# 28
+eval { PHP::eval('throw new Exception("bork");'); };
+my $exc = $@;
+$val = PHP::call( 'loopback', 42);
+ok(( $exc and $val == 42), 'exceptions in eval');
+
+# 29
+PHP::eval('function boom() { throw new Exception("bork"); } '); 
+eval { PHP::call( 'boom'); };
+my $exc = $@;
+$val = PHP::call( 'loopback', 42);
+ok(( $exc and $val == 42), 'exceptions in calls');

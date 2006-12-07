@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.16 2005/05/03 07:50:34 dk Exp $
+$Id: PHP.c,v 1.17 2006/12/07 23:38:38 dk Exp $
 */
 #include "PHP.h"
 
@@ -323,30 +323,28 @@ zval2sv( zval * zobj)
 	case IS_STRING:
 		DEBUG("%s: STRING %d", "zval2sv", Z_STRVAL( *zobj));
 		return newSVpv( Z_STRVAL( *zobj), Z_STRLEN( *zobj));
-	case IS_ARRAY: 
+	case IS_ARRAY:  {
+		SV * array_handle, * obj;
+		dSP;
+	
 		DEBUG("%s: ARRAY 0x%x ref=%d", "zval2sv", zobj, zobj-> refcount);
-		if ( RETURN_PHP_ARRAY_AS_PERL_PSEUDOHASH) {
-			SV * array_handle, * obj;
-			dSP;
-		
-			array_handle = Entity_create( "PHP::ArrayHandle", zobj);
-			
-			ENTER;
-			SAVETMPS;
-			PUSHMARK( sp);
-			XPUSHs( sv_2mortal( newSVpv( "PHP::Array", 0)));
-			XPUSHs( sv_2mortal( array_handle ));
-			PUTBACK;
-			perl_call_method( "new", G_SCALAR);
-			SPAGAIN;
-			obj = newSVsv( POPs);
-			PUTBACK;
-			FREETMPS;
-			LEAVE;
 
-			return obj;
-		} else {
-			return Entity_create( "PHP::ArrayHandle", zobj);
+		array_handle = Entity_create( "PHP::ArrayHandle", zobj);
+		
+		ENTER;
+		SAVETMPS;
+		PUSHMARK( sp);
+		XPUSHs( sv_2mortal( newSVpv( "PHP::Array", 0)));
+		XPUSHs( sv_2mortal( array_handle ));
+		PUTBACK;
+		perl_call_method( "new", G_SCALAR);
+		SPAGAIN;
+		obj = newSVsv( POPs);
+		PUTBACK;
+		FREETMPS;
+		LEAVE;
+
+		return obj;
 		}
 	case IS_OBJECT:		
 		DEBUG("%s: OBJECT 0x%x ref=%d", "zval2sv", zobj, zobj-> refcount);
@@ -507,6 +505,13 @@ XS(PHP_exec)
 			0, NULL TSRMLS_CC);
 	} zend_end_try();
 	PHP_EVAL_LEAVE;
+
+	if ( EG(exception)) {
+		zval_ptr_dtor(&EG(exception));
+		EG(exception) = NULL;
+		ret = FAILURE; /* assert that exception doesn't go unnoticed */
+	}
+
 	if ( ret == FAILURE) {
 		CLEANUP;
 		if ( eval_buf[0])
@@ -555,6 +560,13 @@ XS(PHP_eval)
 		ret = zend_eval_string( SvPV( ST(0), na), NULL, "Embedded code" TSRMLS_CC);
 	} zend_end_try();
 	PHP_EVAL_LEAVE;
+
+	if ( EG(exception)) {
+		zval_ptr_dtor(&EG(exception));
+		EG(exception) = NULL;
+		ret = FAILURE; /* assert that exception doesn't go unnoticed */
+	}
+
 	if ( ret == FAILURE) {
 		croak( "%s", eval_buf[0] ? eval_buf : "PHP::eval failed");
 	} else if ( eval_buf[0])

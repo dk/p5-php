@@ -1,5 +1,5 @@
 /*
-$Id: PHP.h,v 1.6 2005/05/03 16:12:50 dk Exp $
+$Id: PHP.h,v 1.7 2006/12/07 23:38:38 dk Exp $
 */
 
 #ifndef __P5PHP_H__
@@ -11,14 +11,7 @@ $Id: PHP.h,v 1.6 2005/05/03 16:12:50 dk Exp $
 #undef START_EXTERN_C
 #undef END_EXTERN_C
 #undef assert
-#include <php_embed.h>
-
-/*
-If 1, php functions returning arrays to perl, will pass
-a PHP::PseudoHash instance to perl. 
-If 0, it will be PHP::Array, for the backward compatibility 
-*/
-#define RETURN_PHP_ARRAY_AS_PERL_PSEUDOHASH 1
+#include <sapi/embed/php_embed.h>
 
 #define SV2ZANY(sv) get_php_entity(sv, -1)
 #define SV2ZARRAY(sv) get_php_entity(sv, IS_ARRAY)

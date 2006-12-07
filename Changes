@@ -1,5 +1,8 @@
 Revision history for Perl extension PHP.
 
+0.10  08 Dec 2006
+	- reset EG(exception) so further php calls aren't aborted
+
 0.09  24 May 2005
         - add PUSH/POP for array
         - fix TieArray::FETCHSIZE
