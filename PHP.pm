@@ -1,6 +1,6 @@
 package PHP;
 
-# $Id: PHP.pm,v 1.25 2006/12/07 23:38:38 dk Exp $
+# $Id: PHP.pm,v 1.26 2006/12/07 23:43:43 dk Exp $
 
 use strict;
 require DynaLoader;
@@ -394,13 +394,11 @@ Using Perl code from PHP: L<http://www.zend.com/php5/articles/php5-perl.php>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2005 catpipe Systems ApS. All rights reserved.
-
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =head1 AUTHOR
 
-Dmitry Karasik <dk@catpipe.net>
+Dmitry Karasik <dmitry@karasik.eu.org>
 
 =cut
