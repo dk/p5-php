@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.17 2006/12/07 23:38:38 dk Exp $
+$Id: PHP.c,v 1.18 2007/02/09 11:08:34 dk Exp $
 */
 #include "PHP.h"
 
@@ -506,11 +506,13 @@ XS(PHP_exec)
 	} zend_end_try();
 	PHP_EVAL_LEAVE;
 
+#if PHP_MAJOR_VERSION > 4
 	if ( EG(exception)) {
 		zval_ptr_dtor(&EG(exception));
 		EG(exception) = NULL;
 		ret = FAILURE; /* assert that exception doesn't go unnoticed */
 	}
+#endif
 
 	if ( ret == FAILURE) {
 		CLEANUP;
@@ -561,11 +563,13 @@ XS(PHP_eval)
 	} zend_end_try();
 	PHP_EVAL_LEAVE;
 
+#if PHP_MAJOR_VERSION > 4
 	if ( EG(exception)) {
 		zval_ptr_dtor(&EG(exception));
 		EG(exception) = NULL;
 		ret = FAILURE; /* assert that exception doesn't go unnoticed */
 	}
+#endif
 
 	if ( ret == FAILURE) {
 		croak( "%s", eval_buf[0] ? eval_buf : "PHP::eval failed");

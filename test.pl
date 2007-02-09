@@ -1,4 +1,4 @@
-#$Id: test.pl,v 1.12 2006/12/07 23:38:38 dk Exp $
+#$Id: test.pl,v 1.13 2007/02/09 11:08:34 dk Exp $
 
 use Test::More tests => 29;
 use strict;
@@ -152,7 +152,10 @@ ok(( 4 == @$arr and '3' eq $k), 'pop');
 
 undef $arr;
 
+SKIP:{
+
 # 28
+skip "php5 required", 2 unless PHP::options('version') =~ /^(\d+)/ and $1 > 4;
 eval { PHP::eval('throw new Exception("bork");'); };
 my $exc = $@;
 $val = PHP::call( 'loopback', 42);
@@ -164,3 +167,5 @@ eval { PHP::call( 'boom'); };
 my $exc = $@;
 $val = PHP::call( 'loopback', 42);
 ok(( $exc and $val == 42), 'exceptions in calls');
+
+}
