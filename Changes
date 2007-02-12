@@ -1,5 +1,8 @@
 Revision history for Perl extension PHP.
 
+0.11  09 Feb 2007
+	- back-compat for php4
+
 0.10  08 Dec 2006
 	- reset EG(exception) so further php calls aren't aborted
 
