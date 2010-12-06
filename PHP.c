@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.18 2007/02/09 11:08:34 dk Exp $
+$Id: PHP.c,v 1.19 2010/12/06 09:25:27 dk Exp $
 */
 #include "PHP.h"
 
@@ -51,7 +51,7 @@ hv_store_zval( HV * h, const SV* key, zval * val)
 
 	if ( val) {
 		ZVAL_ADDREF( val);
-		DEBUG("addref=%d 0x%x", val-> refcount, val);
+		DEBUG("addref=%d 0x%x", PHP_REFCOUNT(val), val);
 	}
 
 	if ( !ksv) ksv = newSV( sizeof( SV*)); 
@@ -62,13 +62,13 @@ hv_store_zval( HV * h, const SV* key, zval * val)
 		zval * z = ( zval *) HeVAL( he);
 		if ( z) {
 			DEBUG("delref=%d %s0x%x", 
-				z-> refcount - 1,
-				z-> refcount > 1 ? "" : "kill ",
+				PHP_REFCOUNT(z) - 1,
+				PHP_REFCOUNT(z) > 1 ? "" : "kill ",
 				z);
 			zval_ptr_dtor( &z);
 		}
 		HeVAL( he) = &PL_sv_undef;
-		hv_delete_ent( h, ksv, G_DISCARD, 0);
+		(void)hv_delete_ent( h, ksv, G_DISCARD, 0);
 	}
 
 	if ( val) {
@@ -100,7 +100,7 @@ hv_destroy_zval( HV * h)
 
 		value = ( zval*) HeVAL( he);
 		if ( value) {
-			DEBUG("force delete 0x%x delref=%d", value, value-> refcount - 1);
+			DEBUG("force delete 0x%x delref=%d", value, PHP_REFCOUNT(value) - 1);
 			zval_ptr_dtor( &value);
 		}
 		HeVAL( he) = &PL_sv_undef;
@@ -289,7 +289,7 @@ sv2zval( SV * sv, zval * zarg, int suggested_type )
 			DEBUG("%s: %s 0x%x ref=%d", "sv2zval", 
 				(obj->type == IS_OBJECT) ? "OBJECT" : "ARRAY",
 				obj, 
-				obj-> refcount);
+				PHP_REFCOUNT(obj));
 			*zarg = *obj;
 			zval_copy_ctor( zarg);
 			break;
@@ -327,7 +327,7 @@ zval2sv( zval * zobj)
 		SV * array_handle, * obj;
 		dSP;
 	
-		DEBUG("%s: ARRAY 0x%x ref=%d", "zval2sv", zobj, zobj-> refcount);
+		DEBUG("%s: ARRAY 0x%x ref=%d", "zval2sv", zobj, PHP_REFCOUNT(zobj));
 
 		array_handle = Entity_create( "PHP::ArrayHandle", zobj);
 		
@@ -347,7 +347,7 @@ zval2sv( zval * zobj)
 		return obj;
 		}
 	case IS_OBJECT:		
-		DEBUG("%s: OBJECT 0x%x ref=%d", "zval2sv", zobj, zobj-> refcount);
+		DEBUG("%s: OBJECT 0x%x ref=%d", "zval2sv", zobj, PHP_REFCOUNT(zobj));
 		return Entity_create( "PHP::Object", zobj);
 	default:
 		DEBUG("%s: ENTITY 0x%x type=%i\n", "zval2sv", zobj, zobj->type);

@@ -1,5 +1,5 @@
 /*
-$Id: PHP.h,v 1.7 2006/12/07 23:38:38 dk Exp $
+$Id: PHP.h,v 1.8 2010/12/06 09:25:27 dk Exp $
 */
 
 #ifndef __P5PHP_H__
@@ -47,5 +47,14 @@ p5PHP_zval2sv( zval * zobj);
 
 #undef DEBUG
 #define DEBUG if(opt_debug)debug
+
+/* post 5.3.3 stuff */
+#if PHP_MAJOR_VERSION >= 5 && PHP_MINOR_VERSION >= 3
+#define ZVAL_ADDREF Z_ADDREF_P
+#define ZVAL_DELREF Z_DELREF_P
+#define PHP_REFCOUNT(o) o->refcount__gc
+#else
+#define PHP_REFCOUNT(o) o->refcount
+#endif
 
 #endif

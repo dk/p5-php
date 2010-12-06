@@ -1,6 +1,6 @@
 /* 
 
-$Id: array.c,v 1.10 2005/05/24 09:54:57 dk Exp $ 
+$Id: array.c,v 1.11 2010/12/06 09:25:27 dk Exp $ 
 
 Implemenmtation of PHP::TieHash and PHP::TieArray methods
 
@@ -193,7 +193,8 @@ do_zenum(
 	HashPosition * hpos
 ) {
 	SV * ret;
-	int rettype, klen;
+	int rettype;
+	unsigned int klen;
 	unsigned long numkey;
 	char * key;
 
@@ -234,7 +235,7 @@ XS( PHP_TieHash_FIRSTKEY)
 	hash_position = newSV( sizeof( HashPosition));
         sv_setpvn( hash_position, ( char *) &hpos_buf, sizeof( hpos_buf));
 	hpos = ( HashPosition*) SvPV( hash_position, na);
-	hv_store((HV *) SvRV( perl_obj), "__ENUM__", 8, hash_position, 0);
+	(void)hv_store((HV *) SvRV( perl_obj), "__ENUM__", 8, hash_position, 0);
 
 	zend_hash_internal_pointer_reset_ex( HASH_OF(array), hpos); 
 
@@ -414,7 +415,7 @@ XS( PHP_TieArray_DELETE)
 static long 
 array_last_index( HashTable * array)
 {
-	int klen;
+	unsigned int klen;
 	char * key;
 	HashPosition hp;
 	unsigned long numkey;
