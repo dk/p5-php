@@ -1,5 +1,5 @@
 /*
-$Id: PHP.c,v 1.19 2010/12/06 09:25:27 dk Exp $
+$Id: PHP.c,v 1.20 2011/07/26 07:55:10 dk Exp $
 */
 #include "PHP.h"
 
@@ -743,7 +743,11 @@ XS(PHP_done)
 		stderr_hook = NULL;
 	}
 
+#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 4
 	php_end_ob_buffers(1 TSRMLS_CC);
+#else
+	php_output_end_all(TSRMLS_C);
+#endif
 	php_embed_shutdown(TSRMLS_C);
 	DEBUG("PHP::done");
 	XSRETURN_EMPTY;
