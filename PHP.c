@@ -753,6 +753,26 @@ XS(PHP_done)
 	XSRETURN_EMPTY;
 }
 
+XS(PHP_assign_global)
+{
+	dXSARGS;
+	char *varname;
+	zval *zv;
+	(void)items;
+
+	if (items != 2)
+		croak("PHP_assign_global: expect exactly 2 inputs");
+
+	ALLOC_ZVAL(zv);
+	if (!sv2zval(ST(1), zv, -1)) {
+		FREE_ZVAL(zv);
+		croak("PHP::assign_global: parameter 1 is of unsupported type and cannot be passed"); 
+	}
+
+	varname = SvPV_nolen(ST(0));
+	ZEND_SET_GLOBAL_VAR(varname, zv);
+}
+
 /* initialization section */
 XS( boot_PHP)
 {
@@ -792,6 +812,9 @@ XS( boot_PHP)
 	
 	newXS( "PHP::stringify", PHP_stringify, "PHP");
 	
+	newXS( "PHP::_reset", boot_PHP, "PHP" );
+	newXS( "PHP::_assign_global", PHP_assign_global, "PHP");
+	
 	newXS( "PHP::Entity::DESTROY", PHP_Entity_DESTROY, "PHP::Entity");
 	newXS( "PHP::Entity::link", PHP_Entity_link, "PHP::Entity");
 	newXS( "PHP::Entity::unlink", PHP_Entity_unlink, "PHP::Entity");
@@ -806,6 +829,7 @@ XS( boot_PHP)
 	
 	XSRETURN(1);
 }
+
 
 #ifdef __cplusplus
 }

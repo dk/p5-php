@@ -10,7 +10,7 @@ use vars qw($VERSION $v5 @ISA);
 # remove this or change to 0x00 of your OS croaks here
 sub dl_load_flags { 0x01 }
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 bootstrap PHP $VERSION;
 
 PHP::options( debug => 1) if $ENV{P5PHPDEBUG}; 
@@ -26,8 +26,41 @@ sub include	{ PHP::eval( "include('$_[0]');") }
 sub require	{ PHP::eval( "require('$_[0]');") }
 sub include_once{ PHP::eval( "include_once('$_[0]');") }
 sub require_once{ PHP::eval( "require_once('$_[0]');") }
+sub __reset     { PHP::done(); PHP::_reset(); }
 
 sub array       { PHP::Array-> new(shift) }
+
+our %_seen_zvals;
+
+sub assign_global
+{
+	my ($varname, $value) = @_;
+	local %_seen_zvals;
+	PHP::_assign_global($varname, _to_zval($value));
+}
+
+sub _to_zval
+{
+	my $value = shift;
+
+	my $reftype = ref $value;
+
+	unless ($reftype) {
+		return $value;
+	} elsif ( $reftype eq 'SCALAR') {
+		return _to_zval($$value);
+	} elsif ( $reftype eq 'ARRAY') {
+		my $zval = PHP::array;
+		$zval->[$_] = _to_zval($value->[$_]) for 0 .. $#$value;
+		return $zval;
+	} elsif ( $reftype eq 'HASH') {
+		my $zval = PHP::array;
+		$zval->{$_} = _to_zval($value->{$_}) for keys %$value;
+		return $zval;
+	} else {
+		return undef;
+	}
+}
 
 my $LOADED = 1;
 
@@ -265,6 +298,13 @@ Returns exactly one value.
 =item include, include_once, require, require_once
 
 Shortcuts to the identical PHP constructs.
+
+=item assign_global NAME, VALUE
+
+Assigns the given VALUE to the global PHP variable C<$NAME>,
+converting Perl data types to PHP data types as necessary.
+VALUE may be a list reference, hash reference, scalar reference,
+or regular scalar.
 
 =item array [ $REFERENCE ]
 

@@ -13,10 +13,10 @@ my %config = map {
 $config{version} =~ s/^(\d+).*/$1/;
 
 WriteMakefile(
-    'NAME'	=> 'PHP',
-    'VERSION_FROM' => 'PHP.pm', 
-    'LIBS'	=> ["-L$config{prefix}/lib -lphp$config{version}" ],
-    'INC'	=> $config{includes}, 
-    'OBJECT'    => "PHP\$(OBJ_EXT) array\$(OBJ_EXT)",
-    'CCFLAGS'   => '-Wall',
+    NAME       => 'PHP',
+    VERSION_FROM => 'PHP.pm', 
+    LIBS      => ["-L$config{prefix}/lib -lphp$config{version}" ],
+    INC       => $config{includes}, 
+    OBJECT    => "PHP\$(OBJ_EXT) array\$(OBJ_EXT)",
+    CCFLAGS   => '-Wall',
 );

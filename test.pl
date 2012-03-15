@@ -1,6 +1,6 @@
 #$Id: test.pl,v 1.14 2007/02/11 10:59:14 dk Exp $
 
-use Test::More tests => 29;
+use Test::More tests => 33;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -167,5 +167,38 @@ eval { PHP::call( 'boom'); };
 my $exc = $@;
 $val = PHP::call( 'loopback', 42);
 ok(( $exc and $val == 42), 'exceptions in calls');
-
 }
+
+# 30
+my @test30 = ();
+PHP::eval('$foo = 43;');
+PHP::options( stdout => sub { push @test30, $_[0] } );
+PHP::eval('echo "hello " . $foo;');
+
+PHP::__reset();
+PHP::options( stdout => sub { push @test30, $_[0] } );
+PHP::eval('echo "world " . $foo;');
+ok(@test30 == 2 && $test30[0] eq 'hello 43' && $test30[1] eq 'world ',
+    "PHP::__reset clears variables in previous instance");
+
+# 31
+PHP::assign_global("test31", 75);
+PHP::eval('function test31() { global $test31; return $test31; }');
+my $a31 = PHP::call('test31');
+ok($a31 == 75, "PHP::assign_global simple scalar");
+
+#32
+PHP::assign_global("test32", [1, 19, "qwert"]);
+PHP::eval('function test32() { global $test32; return $test32; }');
+my $a32 = PHP::call('test32');
+ok(ref($a32) eq 'PHP::Array' && $a32->[0]==1 && $a32->[1]==19 && $a32->[2]eq'qwert',
+    "PHP::assign_global listref");
+
+#33
+PHP::assign_global("test33", { foo => [ 19, 52 ], cats => "the other white meat" });
+PHP::eval('function test33() { global $test33; return $test33; }');
+my $a33 = PHP::call('test33');
+ok(ref($a33) eq 'PHP::Array' && $a33->{foo}[1]==52 && $a33->{cats} =~ /white meat/,
+    "PHP::assign_global complex data structure");
+
+
