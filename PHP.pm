@@ -44,17 +44,21 @@ sub _to_zval
 	my $value = shift;
 
 	my $reftype = ref $value;
+	return $value unless $reftype;
 
-	unless ($reftype) {
-		return $value;
-	} elsif ( $reftype eq 'SCALAR') {
-		return _to_zval($$value);
+	return $_seen_zvals{"$value"} if exists $_seen_zvals{"$value"};
+
+	if ( $reftype eq 'SCALAR') {
+		$_seen_zvals{"$value"} = undef;
+		return $_seen_zvals{"$value"} = _to_zval($$value);
 	} elsif ( $reftype eq 'ARRAY') {
 		my $zval = PHP::array;
+		$_seen_zvals{"$value"} = $zval;
 		$zval->[$_] = _to_zval($value->[$_]) for 0 .. $#$value;
 		return $zval;
 	} elsif ( $reftype eq 'HASH') {
 		my $zval = PHP::array;
+		$_seen_zvals{"$value"} = $zval;
 		$zval->{$_} = _to_zval($value->{$_}) for keys %$value;
 		return $zval;
 	} else {
