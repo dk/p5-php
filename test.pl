@@ -8,11 +8,11 @@ require_ok('PHP');
 
 # 3 
 eval {
-PHP::eval(<<S1);
+PHP::eval(<<'S1');
 
-function loopback( \$var)
+function loopback($var)
 {
-	return \$var;
+	return $var;
 }
 
 function new_array()
@@ -20,17 +20,17 @@ function new_array()
 	return array();
 }
 
-function print_val(\$arr,\$val)
+function print_val($arr,$val)
 {
-	echo \$arr[\$val];
+	echo $arr[$val];
 }
 
 class TestClass
 {
-	var \$prop;
-	function TestClass (\$a) { echo \$a; }
-	function method(\$val) { return \$val + 1; }
-	function getprop() { return \$this->prop; }
+	var $prop;
+	function TestClass ($a) { echo $a; }
+	function method($val) { return $val + 1; }
+	function getprop() { return $this->prop; }
 };
 
 S1
@@ -125,12 +125,12 @@ ok(( 2 == @k and 2 == scalar grep { m/^(1|mm)$/ } @k), 'hash keys');
 $output = '';
 SKIP:{
 	skip "php5 required", 3 unless PHP::options('version') =~ /^(\d+)/ and $1 > 4;
-	eval { PHP::eval(<<MOO); };
+	eval { PHP::eval(<<'MOO'); };
 class P5 {
 	function __construct() { echo "CREATE"; }
 	function __destruct() { echo "DESTROY"; }
 }
-function p5(){\$a = new P5;return \$a;}
+function p5(){$a = new P5;return $a;}
 MOO
 	{
 	my $P5 = PHP::Object-> new('P5');
@@ -200,5 +200,3 @@ PHP::eval('function test33() { global $test33; return $test33; }');
 my $a33 = PHP::call('test33');
 ok(ref($a33) eq 'PHP::Array' && $a33->{foo}[1]==52 && $a33->{cats} =~ /white meat/,
     "PHP::assign_global complex data structure");
-
-
