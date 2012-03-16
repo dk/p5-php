@@ -231,14 +231,14 @@ General use
 
 	# evaluate arbitrary PHP code; exception is thrown
 	# and can be caught via standard eval{}/$@ block 
-	PHP::eval(<<EVAL);
-	function print_val(\$arr,\$val) {
-		echo \$arr[\$val];
+	PHP::eval(<<'EVAL');
+	function print_val($arr,$val) {
+		echo $arr[$val];
 	}
 	
 	class TestClass {
 		function TestClass ( $param ) {}
-		function method(\$val) { return \$val + 1; }
+		function method($val) { return $val + 1; }
 	};
 	EVAL
 
@@ -293,6 +293,11 @@ Objects and properties
 
 Feeds embedded PHP interpreter with $CODE, throws an exception on
 failure.
+
+=item eval_return $CODE
+
+Same as C<eval> but returns the calculated value. The PHP interpreter does an implicit prepend
+of "return " text to C<$CODE>, so beware.
 
 =item call FUNCTION ...
 

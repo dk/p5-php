@@ -1,6 +1,6 @@
 #$Id: test.pl,v 1.14 2007/02/11 10:59:14 dk Exp $
 
-use Test::More tests => 33;
+use Test::More tests => 35;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -200,3 +200,11 @@ PHP::eval('function test33() { global $test33; return $test33; }');
 my $a33 = PHP::call('test33');
 ok(ref($a33) eq 'PHP::Array' && $a33->{foo}[1]==52 && $a33->{cats} =~ /white meat/,
     "PHP::assign_global complex data structure");
+
+#34
+my $r = PHP::eval_return('40+2');
+ok( $r == 42, 'simple eval/return');
+
+#35
+$r = PHP::eval_return('$test33');
+ok( $r && ref($r) && ref($r) eq 'PHP::Array' && $r->{cats} =~ /white meat/, 'global var in eval/return');

@@ -580,6 +580,58 @@ XS(PHP_eval)
 	XSRETURN_EMPTY;
 }
 
+/* eval php code with return, croak on failure */
+XS(PHP_eval_return)
+{
+	dXSARGS;
+	int ret = FAILURE;
+	zval * zret;
+	SV * retsv;
+	dPHP_EVAL;
+
+	STRLEN na;
+	(void)items;
+
+	DEBUG("PHP::eval_return(%d args)", items);
+	if ( items < 0 || items > 2)
+		croak("PHP::eval_return: expect 1 parameter");
+
+	MAKE_STD_ZVAL(zret);
+	zret-> type = IS_NULL;
+	
+	PHP_EVAL_ENTER;
+	zend_try {
+		ret = zend_eval_string( SvPV( ST(0), na), zret, "Embedded code" TSRMLS_CC);
+	} zend_end_try();
+	PHP_EVAL_LEAVE;
+
+#if PHP_MAJOR_VERSION > 4
+	if ( EG(exception)) {
+		zval_ptr_dtor(&EG(exception));
+		EG(exception) = NULL;
+		ret = FAILURE; /* assert that exception doesn't go unnoticed */
+	}
+#endif
+
+	if ( ret == FAILURE) {
+		zval_ptr_dtor(&zret);
+		croak( "%s", eval_buf[0] ? eval_buf : "PHP::eval_return failed");
+	} else if ( eval_buf[0])
+		warn("%s", eval_buf);
+	
+	SPAGAIN;
+	SP -= items;
+
+	if ( !( retsv = zval2sv( zret))) {
+		warn("PHP::eval_return: eval return value cannot be converted\n");
+		retsv = &PL_sv_undef;
+	}
+	retsv = sv_2mortal( retsv);
+	XPUSHs( retsv);
+	zval_ptr_dtor( &zret);
+	PUTBACK;
+}
+
 /* get and set various options */
 XS(PHP_options)
 {
@@ -809,6 +861,7 @@ XS( boot_PHP)
 	
 	newXS( "PHP::exec", PHP_exec, "PHP");
 	newXS( "PHP::eval", PHP_eval, "PHP");
+	newXS( "PHP::eval_return", PHP_eval_return, "PHP");
 	
 	newXS( "PHP::stringify", PHP_stringify, "PHP");
 	
