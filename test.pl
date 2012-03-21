@@ -1,6 +1,6 @@
 #$Id: test.pl,v 1.14 2007/02/11 10:59:14 dk Exp $
 
-use Test::More tests => 35;
+use Test::More tests => 60;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -185,26 +185,136 @@ ok(@test30 == 2 && $test30[0] eq 'hello 43' && $test30[1] eq 'world ',
 PHP::assign_global("test31", 75);
 PHP::eval('function test31() { global $test31; return $test31; }');
 my $a31 = PHP::call('test31');
-ok($a31 == 75, "PHP::assign_global simple scalar");
+ok($a31 == 75, "assign_global simple scalar");
 
-#32
+# 32
 PHP::assign_global("test32", [1, 19, "qwert"]);
 PHP::eval('function test32() { global $test32; return $test32; }');
 my $a32 = PHP::call('test32');
 ok(ref($a32) eq 'PHP::Array' && $a32->[0]==1 && $a32->[1]==19 && $a32->[2]eq'qwert',
-    "PHP::assign_global listref");
+    "assign_global listref");
 
-#33
+# 33
 PHP::assign_global("test33", { foo => [ 19, 52 ], cats => "the other white meat" });
 PHP::eval('function test33() { global $test33; return $test33; }');
 my $a33 = PHP::call('test33');
 ok(ref($a33) eq 'PHP::Array' && $a33->{foo}[1]==52 && $a33->{cats} =~ /white meat/,
-    "PHP::assign_global complex data structure");
+    "assign_global complex data structure");
 
-#34
+# 34
 my $r = PHP::eval_return('40+2');
 ok( $r == 42, 'simple eval/return');
 
-#35
+# 35
 $r = PHP::eval_return('$test33');
-ok( $r && ref($r) && ref($r) eq 'PHP::Array' && $r->{cats} =~ /white meat/, 'global var in eval/return');
+ok( $r && ref($r) && ref($r) eq 'PHP::Array' && $r->{cats} =~ /white meat/,
+    'global var in eval/return');
+
+# 36
+my @h36 = ();
+PHP::options( header => sub { push @h36, $_[0] } );
+PHP::eval('header("Subject: Payload");');
+PHP::eval_return('header("Header-X: This is a header");');
+ok( $h36[0] eq 'Subject: Payload' && $h36[1] =~ /This is a header/,
+    "PHP::options(header => ...) callback" );
+
+# 37
+my $a37 = [ 42 ];
+my $b37 = [ $a37 ];
+$a37->[0] = $b37;
+$SIG{ALRM} = sub { die "Timeout assigning global with circular ref\n" };
+alarm 5;
+my $z37 = eval {
+    PHP::assign_global( 'foo', $a37 );
+    1;
+};
+alarm 0;
+ok( $z37, 'assign_global with circular ref didn\'t cause infinite loop' );
+
+# 38
+PHP::assign_global( 'g38', bless ['I','II','III','IV'],'Roman::Numeral::Array' );
+my $g38 = PHP::eval_return('$g38;');
+ok( $g38 && ref($g38) && ref($g38) eq 'PHP::Array'
+    && $g38->[0] eq 'I' && $g38->[3] eq 'IV',
+    'assign_global blessed list reference' );
+
+# 39
+PHP::assign_global( 'g39', bless { Brazil => 'Brasilia', Uruguay => 'Montevideo' }, 'South::American::Capitols' );
+my $g39 = PHP::eval_return( '$g39;' );
+ok( $g39 && ref($g39) && ref($g39) eq 'PHP::Array'
+    && $g39->{Brazil} eq 'Brasilia' && $g39->{Uruguay} eq 'Montevideo',
+    'assign_global blessed hash reference' );
+
+# 40
+PHP::assign_global( 'g40', { hash => { abc => 'def' }, list => [3,4,5], scalar => 4 } );
+my $g40 = PHP::eval_return( '$g40;' );
+ok( $g40 && ref($g40) && ref($g40) eq 'PHP::Array'
+    && ref($g40->{hash}) eq 'PHP::Array'
+    && ref($g40->{list}) eq 'PHP::Array'
+    && ref($g40->{scalar}) eq '',
+    'assign_global: complex data structure has nested PHP::Array' );
+
+# 41
+ok( PHP::eval_return('"Evaluate PHP statement from Perl? Awesome!";') =~ /awesome/i,
+    'eval/return simple string' );
+
+# 42
+PHP::eval('$foo=5;');
+ok( PHP::eval_return('$foo*$foo;') == 25,
+    'eval/return simple expression with variables ');
+
+# 43-45
+ok( PHP::eval_return('TRUE;') == 1, 'eval/return TRUE maps to 1' );
+ok( PHP::eval_return('FALSE;') eq '', 'eval/return FALSE maps to ""' );
+ok( !defined(PHP::eval_return('NULL;')), 'eval/return NULL maps to undef' );
+
+# 46-47
+ok( PHP::eval_return('4 > 5 ? 19 : 42;') == 42, 'eval/return ternary 1' );
+ok( PHP::eval_return('4 < 5 ? 19 : 42;') == 19, 'eval/return ternary 2' );
+
+# 48-53: the don'ts of eval_return
+eval { PHP::eval_return('return "foo";') };
+ok( $@, 'don\t use "return" inside PHP::eval_return' );
+
+eval { PHP::eval_return('if (2<17) 8; else 9;') };
+ok ($@, 'don\'t use "if", "if/else" inside PHP::eval_return' );
+
+eval { PHP::eval_return('function foo() { return 42; }') };
+ok ($@, 'don\'t declare functions inside PHP::eval_return' );
+
+eval { PHP::eval_return('echo 16;') };
+ok ($@, 'don\'t use echo inside PHP::eval_return' );
+
+eval { PHP::eval_return('die("die message");') };
+ok ($@, 'don\'t call die() inside PHP::eval_return' );
+
+eval { PHP::eval_return('exit(4);') };
+ok ($@, 'don\'t call exit() inside PHP::eval_return' );
+
+# 54-55
+my $t54 = eval { PHP::eval_return(''); };
+ok( !$@ && !defined($t54), 'eval/return(empty) ok, undef' );
+
+my $t55 = eval { no warnings 'uninitialized'; PHP::eval_return(undef); };
+ok( !$@ && !defined($t55), 'eval/return(undef) ok, undef' );
+
+# 56-57
+my $t56 = eval { PHP::eval_return('abs(-6)-log10(1000);') ; };
+ok( $t56==3, 'eval/return with math functions' );
+
+my $t57 = eval { PHP::eval_return("date('Y',$^T);"); };
+ok($t57 >= 2012 && $t57 < 2020, 'eval/return with datetime functions');
+
+# 58-60
+my $t58 = eval { PHP::eval_return("array(5,10,15,20);"); };
+ok($t58->[0] == 5 && $t58->[3] == 20, 'eval/return simple array');
+
+my $t59 = eval { PHP::eval_return('array("abc"=>45, "ghi"=>"tennis");') };
+ok($t59->{abc} == 45 && $t59->{ghi} eq "tennis" && !defined($t59->{foo}),
+    'eval/return simple associative array');
+
+my $t60 = eval { PHP::eval_return( q^
+array(11, 16, array( "Perl" => "good", "PHP" => "meh" ),
+      array(5, 8, 13, 21, 34));^) };
+ok($t60->[1] == 16 && $t60->[2]{PHP} !~ /good/ && $t60->[3][3] == 21,
+    'eval/return more complex data structure');

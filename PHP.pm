@@ -41,9 +41,11 @@ sub assign_global
 
 sub _to_zval
 {
+	require Scalar::Util;
 	my $value = shift;
 
-	my $reftype = ref $value;
+	my $reftype = Scalar::Util::reftype($value);
+	$value = undef if ref(\$value) eq 'GLOB';
 	return $value unless $reftype;
 
 	return $_seen_zvals{"$value"} if exists $_seen_zvals{"$value"};
@@ -292,11 +294,24 @@ Objects and properties
 =item eval $CODE
 
 Feeds embedded PHP interpreter with $CODE, throws an exception on
-failure.
+failure. This method does not have a return value. See also C<eval_return>.
 
 =item eval_return $CODE
 
-Same as C<eval> but returns the calculated value. The PHP interpreter does an implicit prepend
+Same as C<eval> but returns the calculated value. This method can be used 
+for any expression where it would make sense if you put a C<"return "> in
+front of it. Otherwise you should use C<eval>.
+
+    $x = PHP::eval_return("13*86;");                           # ok
+    $x = PHP::eval_return('$var + func_that_returns_val();');  # ok
+    $x = PHP::eval_return('$var < 0 ? $var : array(7,8,9);');  # ok
+    $x = PHP::eval_return('function foo() { return 75;}');     # not ok
+    $x = PHP::eval_return('if ($var<0) { $bar=$foo; ');        # not ok
+    $x = PHP::eval_return('echo "This is a message";');        # not ok
+
+
+
+The PHP interpreter does an implicit prepend
 of "return " text to C<$CODE>, so beware.
 
 =item call FUNCTION ...

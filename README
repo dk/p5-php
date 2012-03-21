@@ -16,6 +16,9 @@ SYNOPSIS
             function print_val(\$arr,\$val) {
                     echo \$arr[\$val];
             }
+
+            # evaluate PHP expressions
+            $answer = PHP::eval_return('7*(1+2+3);');
         
             class TestClass {
                     function TestClass ( $param ) {}

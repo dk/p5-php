@@ -14,6 +14,7 @@ static HV *z_objects = NULL; 	/* SV => zval ; the hash accounts for zrefcount */
 static SV *ksv = NULL;		/* local SV for key storage */
 static SV *stdout_hook = NULL;/* if non-null, is a callback for stdout */
 static SV *stderr_hook = NULL;/* if non-null, is a callback for stderr */
+static SV *header_hook = NULL;/* if non-null, is a callback for header */
 static char * eval_ptr = NULL;
 /*
 these macros allow re-entrant accumulation of php errors
@@ -652,6 +653,7 @@ XS(PHP_options)
 		PUSHs( sv_2mortal( newSVpv( "debug", 5)));
 		PUSHs( sv_2mortal( newSVpv( "stdout", 6)));
 		PUSHs( sv_2mortal( newSVpv( "stderr", 6)));
+		PUSHs( sv_2mortal( newSVpv( "header", 6)));
 		PUSHs( sv_2mortal( newSVpv( "version", 7)));
 		return;
 	case 1:
@@ -668,11 +670,13 @@ XS(PHP_options)
 				opt_debug = SvIV( ST( 1));
 			}
 		} else if ( 
+			strcmp( c, "header") == 0 ||
 			strcmp( c, "stdout") == 0 ||
 			strcmp( c, "stderr") == 0
 			) {
 			SV ** ptr = ( strcmp( c, "stdout") == 0) ? 
-				&stdout_hook : &stderr_hook;
+				&stdout_hook : (strcmp( c, "stderr" ) == 0
+				? &stderr_hook : &header_hook);
 			if ( items == 1) {
 				SPAGAIN;
 				SP -= items;
@@ -774,6 +778,26 @@ mod_deactivate(TSRMLS_D)
 	return SUCCESS;
 }
 
+static int
+mod_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op,
+		   sapi_headers_struct *sapi_headers TSRMLS_DC)
+{
+	if (sapi_header && sapi_header->header_len && header_hook) {
+		dSP;
+		ENTER;
+		SAVETMPS;
+		PUSHMARK(sp);
+		XPUSHs(sv_2mortal(newSVpvn(sapi_header->header,sapi_header->header_len)));
+		PUTBACK;
+		perl_call_sv( header_hook, G_DISCARD );
+		SPAGAIN;
+		FREETMPS;
+		LEAVE;
+		return SUCCESS;
+	}
+	return FAILURE;
+}
+
 /* stop PHP embedded module */
 XS(PHP_done)
 {
@@ -849,6 +873,7 @@ XS( boot_PHP)
 	sapi_module. log_message	= mod_log_message;
 	sapi_module. ub_write		= mod_ub_write;
 	sapi_module. deactivate		= mod_deactivate;
+	sapi_module. header_handler     = mod_header_handler;
 
 	php_output_startup();
 	php_output_activate(TSRMLS_C);
