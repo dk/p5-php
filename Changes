@@ -2,6 +2,7 @@ Revision history for Perl extension PHP.
 
 0.13  04 Mar 2012 (mob)
        - added PHP::__reset and PHP::assign_global functions
+       - added PHP::options(header => ...) callback
 
 0.12  10 Dec 2010
         - support PHP v5.2 and v5.3
