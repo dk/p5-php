@@ -408,6 +408,13 @@ when PHP decides to print something or complain, respectively.
 
 Default: undef
 
+=item header $callback
+
+Callback when PHP sets a response header with the PHP C<header()>
+function.
+
+Default: undef
+
 =item version
 
 Read-only option; returns the version of PHP library compiled with .

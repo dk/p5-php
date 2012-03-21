@@ -148,6 +148,10 @@ API
 
             Default: undef
 
+        header $callback
+            callback when PHP header() function is called, when PHP wants
+            to set a response header
+
         version
             Read-only option; returns the version of PHP library compiled
             with .
