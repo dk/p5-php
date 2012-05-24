@@ -29,6 +29,8 @@ to be reported, if any, by croak()
 #define PHP_EVAL_LEAVE eval_ptr = old_eval_ptr
 #define PHP_EVAL_CROAK(default_message)	
 
+void init_rfc1867();
+void deinit_rfc1867();
 
 void 
 debug( char * format, ...)
@@ -273,7 +275,7 @@ sv2zval( SV * sv, zval * zarg, int suggested_type )
 			DEBUG("%s: STRING %s", "sv2zval", c);
 			ZVAL_STRINGL( zarg, c, len, 1);
 			break;
-		} 
+		}
 		default:
 			DEBUG("%s: cannot convert scalar %d/%s", "sv2zval", SvTYPE( sv), SvPV( sv, len));
 			return 0;
@@ -805,7 +807,6 @@ XS(PHP_done)
 	(void)items;
 
 	initialized = 0;
-
 	hv_destroy_zval( z_objects);
 	sv_free( ksv);
 	z_objects = NULL;
@@ -824,6 +825,7 @@ XS(PHP_done)
 #else
 	php_output_end_all(TSRMLS_C);
 #endif
+	deinit_rfc1867();
 	php_embed_shutdown(TSRMLS_C);
 	DEBUG("PHP::done");
 	XSRETURN_EMPTY;
@@ -847,6 +849,52 @@ XS(PHP_assign_global)
 
 	varname = SvPV_nolen(ST(0));
 	ZEND_SET_GLOBAL_VAR(varname, zv);
+}
+
+
+/*
+ * rfc1867 functions -- on file upload, PHP writes the uploaded file
+ * to a temporary location and adds the temporary filename to an
+ * internal hashtable -- see rfc1867_post_handler() in main/rfc1867.c .
+ * PHP's  is_uploaded_file()  function checks this internal hash
+ * to make sure that the named file was uploaded properly. 
+ *
+ * The next few functions provide a mechanism to spoof entries to
+ * PHP's hashtable. This will be necessary to support uploaded
+ * files in Perl (say, CGI or Catalyst) but making it appear to
+ * the PHP interpreter that they were uploaded properly in PHP.
+ */ 
+
+XS(PHP_spoof_rfc1867)
+{
+	dXSARGS;
+	char *temp_filename;
+	(void)items;
+
+	if (items != 1)
+		croak("PHP_spoof_rfc1867: expect exactly 1 input");
+	temp_filename = SvPV_nolen(ST(0));
+	zend_hash_add(SG(rfc1867_uploaded_files), temp_filename, strlen(temp_filename) + 1, 
+		      &temp_filename, sizeof(char *), NULL);
+}
+
+void init_rfc1867()
+{
+	HashTable *uploaded_files = NULL;
+
+	ALLOC_HASHTABLE(uploaded_files);
+	zend_hash_init(uploaded_files, 5, NULL, (dtor_func_t) free_estring, 0);
+	SG(rfc1867_uploaded_files) = uploaded_files;
+	zend_hash_init(uploaded_files, 5, NULL, (dtor_func_t) free_estring, 0);
+}
+
+void deinit_rfc1867()
+{
+	if (SG(rfc1867_uploaded_files)) {
+		//zend_hash_destroy(SG(rfc1867_uploaded_files));  // memory leak?
+		FREE_HASHTABLE(SG(rfc1867_uploaded_files));
+		SG(rfc1867_uploaded_files) = NULL;
+	}
 }
 
 /* initialization section */
@@ -892,6 +940,7 @@ XS( boot_PHP)
 	
 	newXS( "PHP::_reset", boot_PHP, "PHP" );
 	newXS( "PHP::_assign_global", PHP_assign_global, "PHP");
+	newXS( "PHP::_spoof_rfc1867", PHP_spoof_rfc1867, "PHP");
 	
 	newXS( "PHP::Entity::DESTROY", PHP_Entity_DESTROY, "PHP::Entity");
 	newXS( "PHP::Entity::link", PHP_Entity_link, "PHP::Entity");
@@ -900,6 +949,7 @@ XS( boot_PHP)
 	newXS( "PHP::Object::_new", PHP_Object__new, "PHP::Object");
 
 	register_PHP_Array();
+	init_rfc1867();
 
 	initialized = 1;
 	

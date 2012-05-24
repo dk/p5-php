@@ -10,7 +10,7 @@ use vars qw($VERSION $v5 @ISA);
 # remove this or change to 0x00 of your OS croaks here
 sub dl_load_flags { 0x01 }
 
-$VERSION = '0.13';
+$VERSION = '0.14';
 bootstrap PHP $VERSION;
 
 PHP::options( debug => 1) if $ENV{P5PHPDEBUG}; 
@@ -36,6 +36,11 @@ sub assign_global
 {
 	my ($varname, $value) = @_;
 	local %_seen_zvals;
+	if ($varname eq '_REQUEST' || $varname eq '_SERVER' || $varname eq '_ENV') {
+		# don't know why this works, but assignment to these superglobals won't
+		# take without this step.
+		PHP::eval( "\$$varname;" );
+	}
 	PHP::_assign_global($varname, _to_zval($value));
 }
 

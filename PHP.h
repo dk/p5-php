@@ -12,6 +12,7 @@ $Id: PHP.h,v 1.8 2010/12/06 09:25:27 dk Exp $
 #undef END_EXTERN_C
 #undef assert
 #include <sapi/embed/php_embed.h>
+#include <main/rfc1867.h>
 
 #define SV2ZANY(sv) get_php_entity(sv, -1)
 #define SV2ZARRAY(sv) get_php_entity(sv, IS_ARRAY)

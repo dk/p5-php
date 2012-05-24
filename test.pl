@@ -1,6 +1,6 @@
 #$Id: test.pl,v 1.14 2007/02/11 10:59:14 dk Exp $
 
-use Test::More tests => 60;
+use Test::More tests => 71;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -318,3 +318,24 @@ array(11, 16, array( "Perl" => "good", "PHP" => "meh" ),
       array(5, 8, 13, 21, 34));^) };
 ok($t60->[1] == 16 && $t60->[2]{PHP} !~ /good/ && $t60->[3][3] == 21,
     'eval/return more complex data structure');
+
+# 61-63
+my $fake_file = "/fj234oi/453rerf3v434v3.txt";
+my $fake_file2 = "/fj234o1e2123ei/453rqwrqe1241423rwerf3v434v3.txt";
+ok( ! PHP::eval_return( "is_uploaded_file('$fake_file')" ),
+    "is_uploaded_file false for fake file" );
+PHP::_spoof_rfc1867($fake_file);
+ok( PHP::eval_return( "is_uploaded_file('$fake_file')" ),
+    "is_uploaded_file true for spoofed fake file" );
+PHP::_spoof_rfc1867($fake_file2);
+ok( PHP::eval_return( "is_uploaded_file('$fake_file') && is_uploaded_file('$fake_file2')" ),
+    "is_uploaded_file true for two spoofed files" );
+
+# 64-71
+my @superglobals = qw[_SERVER _GET _POST _FILES _COOKIE _SESSION _REQUEST _ENV];
+foreach my $global (@superglobals) {
+    PHP::assign_global( $global, { abc => 'foo', def => 123, name => $global } );
+    my $t = PHP::eval_return( "\$$global" );
+    ok( $t->{abc} eq 'foo' && $t->{def} == 123 && $t->{name} eq $global,
+	"assignment to superglobal $global" );
+}
