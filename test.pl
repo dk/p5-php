@@ -1,6 +1,6 @@
 #$Id: test.pl,v 1.14 2007/02/11 10:59:14 dk Exp $
 
-use Test::More tests => 71;
+use Test::More tests => 75;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -332,10 +332,32 @@ ok( PHP::eval_return( "is_uploaded_file('$fake_file') && is_uploaded_file('$fake
     "is_uploaded_file true for two spoofed files" );
 
 # 64-71
-my @superglobals = qw[_SERVER _GET _POST _FILES _COOKIE _SESSION _REQUEST _ENV];
+my @superglobals = qw(_SERVER _GET _POST _FILES _COOKIE _SESSION _REQUEST _ENV);
+my $jj = 0;
 foreach my $global (@superglobals) {
-    PHP::assign_global( $global, { abc => 'foo', def => 123, name => $global } );
-    my $t = PHP::eval_return( "\$$global" );
-    ok( $t->{abc} eq 'foo' && $t->{def} == 123 && $t->{name} eq $global,
-	"assignment to superglobal $global" );
+    $jj++;
+    my $data = { foo => 123, bar => 'def', name => $global, jj => $jj };
+    PHP::assign_global( $global, $data );
+    my $t = PHP::eval_return( '$' . $global );
+    ok( $t->{foo} eq '123' && $t->{bar} eq 'def' && $t->{name} eq $global && $t->{jj} == $jj,
+	"assignment to superglobal $global");
 }
+
+# 72-75
+my $test_file = "upload_test1";
+my $test_file2 = "upload test2";
+unlink $test_file, $test_file2;
+ok( ! PHP::call('move_uploaded_file', $test_file, $test_file2),
+    'move_uploaded_file not successful yet' );
+open my $fh, '>', $test_file;
+print $fh "upload test file\n";
+close $fh;
+PHP::_spoof_rfc1867( $test_file );
+ok( -f $test_file && PHP::eval_return( "is_uploaded_file('$test_file')" ),
+    'test upload file acknowledged by PHP' );
+ok( PHP::call('move_uploaded_file', $test_file, $test_file2),
+    'move_uploaded_file successful on spoofed upload' );
+ok( -f $test_file2 && ! -f $test_file,
+    'moved uploaded file has a new name' );
+unlink $test_file, $test_file2;
+

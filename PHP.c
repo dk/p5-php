@@ -805,7 +805,6 @@ XS(PHP_done)
 {
 	dXSARGS;
 	(void)items;
-
 	initialized = 0;
 	hv_destroy_zval( z_objects);
 	sv_free( ksv);
@@ -883,9 +882,11 @@ void init_rfc1867()
 	HashTable *uploaded_files = NULL;
 
 	ALLOC_HASHTABLE(uploaded_files);
-	zend_hash_init(uploaded_files, 5, NULL, (dtor_func_t) free_estring, 0);
+	// free_estring  can cause seg fault during php_embed_shutdown.
+	// hopefully this is not a significant memory leak
+//	zend_hash_init(uploaded_files, 5, NULL, (dtor_func_t) free_estring, 0);
+	zend_hash_init(uploaded_files, 5, NULL, NULL, 0);
 	SG(rfc1867_uploaded_files) = uploaded_files;
-	zend_hash_init(uploaded_files, 5, NULL, (dtor_func_t) free_estring, 0);
 }
 
 void deinit_rfc1867()
