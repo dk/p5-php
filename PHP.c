@@ -16,6 +16,10 @@ static SV *stdout_hook = NULL;/* if non-null, is a callback for stdout */
 static SV *stderr_hook = NULL;/* if non-null, is a callback for stderr */
 static SV *header_hook = NULL;/* if non-null, is a callback for header */
 static char * eval_ptr = NULL;
+static char *post_content = NULL;
+static int post_content_index = -1;
+static int post_content_length = -1;
+
 /*
 these macros allow re-entrant accumulation of php errors
 to be reported, if any, by croak() 
@@ -800,6 +804,36 @@ mod_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op,
 	return FAILURE;
 }
 
+XS(PHP_set_php_input)
+{
+	dXSARGS;
+	(void) items;
+	if (items != 1) {
+		croak("PHP_set_php_input: expect exactly 1 input!");
+	}
+	post_content = SvPV(ST(0), post_content_length);
+	post_content_index = 0;
+}
+
+static int
+mod_read_post(char *buffer, uint count_bytes TSRMLS_DC)
+{
+	int old_index = post_content_index;
+	if (NULL == post_content) {
+		return 0;
+	}
+	while (post_content_index < post_content_length &&
+	       post_content_index - old_index < count_bytes) {
+		buffer[post_content_index - old_index] = post_content[post_content_index];
+		post_content_index++;
+	}
+	if (post_content_index >= post_content_length) {
+		post_content = NULL; /* memory leak here? */
+		post_content_length = 0;
+	}
+	return post_content_index - old_index;
+}
+
 /* stop PHP embedded module */
 XS(PHP_done)
 {
@@ -923,6 +957,7 @@ XS( boot_PHP)
 	sapi_module. ub_write		= mod_ub_write;
 	sapi_module. deactivate		= mod_deactivate;
 	sapi_module. header_handler     = mod_header_handler;
+	sapi_module. read_post          = mod_read_post;
 
 	php_output_startup();
 	php_output_activate(TSRMLS_C);
@@ -941,6 +976,7 @@ XS( boot_PHP)
 	
 	newXS( "PHP::_reset", boot_PHP, "PHP" );
 	newXS( "PHP::_assign_global", PHP_assign_global, "PHP");
+	newXS( "PHP::set_php_input", PHP_set_php_input, "PHP");
 	newXS( "PHP::_spoof_rfc1867", PHP_spoof_rfc1867, "PHP");
 	
 	newXS( "PHP::Entity::DESTROY", PHP_Entity_DESTROY, "PHP::Entity");

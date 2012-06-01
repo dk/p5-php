@@ -426,6 +426,18 @@ Read-only option; returns the version of PHP library compiled with .
 
 =back
 
+=item PHP::set_php_input($string)
+
+Sets content for PHP applications that read from the C<<php://input>
+stream.
+
+=item PHP::_spoof_rfc1867($filename)
+
+Manipulates an internal hash in PHP so that PHP's C<is_uploaded_file>
+function will return true for the given filename. This can be helpful 
+when you have already manipulated PHP's global C<$_FILES> variable
+for an application that uploads files. But it is not always necessary.
+
 =back
 
 =head1 DEBUGGING

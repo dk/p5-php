@@ -1,6 +1,6 @@
 #$Id: test.pl,v 1.14 2007/02/11 10:59:14 dk Exp $
 
-use Test::More tests => 75;
+use Test::More tests => 76;
 use strict;
 
 BEGIN { use_ok('PHP'); }
@@ -274,7 +274,7 @@ ok( PHP::eval_return('4 < 5 ? 19 : 42;') == 19, 'eval/return ternary 2' );
 
 # 48-53: the don'ts of eval_return
 eval { PHP::eval_return('return "foo";') };
-ok( $@, 'don\t use "return" inside PHP::eval_return' );
+ok( $@, 'don\'t use "return" inside PHP::eval_return' );
 
 eval { PHP::eval_return('if (2<17) 8; else 9;') };
 ok ($@, 'don\'t use "if", "if/else" inside PHP::eval_return' );
@@ -340,7 +340,7 @@ foreach my $global (@superglobals) {
     PHP::assign_global( $global, $data );
     my $t = PHP::eval_return( '$' . $global );
     ok( $t->{foo} eq '123' && $t->{bar} eq 'def' && $t->{name} eq $global && $t->{jj} == $jj,
-	"assignment to superglobal $global");
+	"assignment to superglobal \$$global");
 }
 
 # 72-75
@@ -361,3 +361,8 @@ ok( -f $test_file2 && ! -f $test_file,
     'moved uploaded file has a new name' );
 unlink $test_file, $test_file2;
 
+# 76
+PHP::set_php_input("0123456789012345678\n" x 568);
+my $t76 = PHP::eval_return( 'file_get_contents("php://input")' );
+ok( $t76 eq "0123456789012345678\n" x 568,
+    'post content avail in php://input' );
