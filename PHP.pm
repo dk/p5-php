@@ -26,7 +26,7 @@ sub include	{ PHP::eval( "include('$_[0]');") }
 sub require	{ PHP::eval( "require('$_[0]');") }
 sub include_once{ PHP::eval( "include_once('$_[0]');") }
 sub require_once{ PHP::eval( "require_once('$_[0]');") }
-sub __reset     { PHP::done(); PHP::_reset(); }
+sub __reset     { no warnings 'redefine'; PHP::done(); PHP::_reset(); }
 
 sub array       { PHP::Array-> new(shift) }
 
