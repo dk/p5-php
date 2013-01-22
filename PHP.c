@@ -789,6 +789,7 @@ mod_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op,
 		   sapi_headers_struct *sapi_headers TSRMLS_DC)
 {
 	if (sapi_header && sapi_header->header_len && header_hook) {
+		debug("*** header enum is %d ***", op);
 	  	int replace = !(int) op;
 		dSP;
 		ENTER;
