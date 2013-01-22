@@ -416,7 +416,8 @@ Default: undef
 =item header $callback
 
 Callback when PHP sets a response header with the PHP C<header()>
-function.
+function. The callback will receive two arguments, corresponding to 
+the first two arguments of the PHP C<header()> function. 
 
 Default: undef
 

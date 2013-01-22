@@ -789,11 +789,14 @@ mod_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op,
 		   sapi_headers_struct *sapi_headers TSRMLS_DC)
 {
 	if (sapi_header && sapi_header->header_len && header_hook) {
+	  	int replace = !(int) op;
 		dSP;
 		ENTER;
 		SAVETMPS;
 		PUSHMARK(sp);
-		XPUSHs(sv_2mortal(newSVpvn(sapi_header->header,sapi_header->header_len)));
+		XPUSHs(sv_2mortal(newSVpvn(sapi_header->header,
+				sapi_header->header_len)));
+		XPUSHs(sv_2mortal(newSViv(replace)));
 		PUTBACK;
 		perl_call_sv( header_hook, G_DISCARD );
 		SPAGAIN;
