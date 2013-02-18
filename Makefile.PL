@@ -5,7 +5,10 @@ use strict;
 
 my %config = map { 
 	my $a = `php-config --$_`;
-	die "Error: php-config --$_ failed\n" unless $a;
+	unless ($a) {
+	    print "Error: php-config --$_ failed\n";
+	    exit 0;
+	}
 	chomp $a;
 	$_ => $a;
 } qw(includes prefix version);

@@ -1,5 +1,9 @@
 Revision history for Perl extension PHP.
 
+0.16  ...
+        - RT#82890 Makefile.PL suppress cpantester report if PHP not available
+	- RT#83345 Makefile.PL change for some debian systems
+
 0.15  20 Jan 2013 (mob)
         - pass $replace arg to header callback
 
