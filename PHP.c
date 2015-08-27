@@ -16,9 +16,8 @@ static SV *stdout_hook = NULL;/* if non-null, is a callback for stdout */
 static SV *stderr_hook = NULL;/* if non-null, is a callback for stderr */
 static SV *header_hook = NULL;/* if non-null, is a callback for header */
 static char * eval_ptr = NULL;
-static char *post_content = NULL;
+static SV *post_content_sv = NULL;
 static int post_content_index = -1;
-static int post_content_length = -1;
 
 /*
 these macros allow re-entrant accumulation of php errors
@@ -198,7 +197,7 @@ XS(PHP_stringify)
 	sv = ST(0);
 	if ( !SvROK( sv))
 		croak("PHP::stringify: not a reference passed");
-	sprintf( str, "PHP(0x%x)", (unsigned int) SvRV( sv));
+	sprintf( str, "PHP(0x%lx)", (UV) SvRV( sv));
 
 	XPUSHs( sv_2mortal( newSVpv( str, strlen( str))));
 	PUTBACK;
@@ -811,11 +810,13 @@ mod_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op,
 XS(PHP_set_php_input)
 {
 	dXSARGS;
+	STRLEN l;
 	(void) items;
 	if (items != 1) {
 		croak("PHP_set_php_input: expect exactly 1 input!");
 	}
-	post_content = SvPV(ST(0), post_content_length);
+	if ( post_content_sv ) sv_free( post_content_sv );
+	post_content_sv = newSVsv(ST(0));
 	post_content_index = 0;
 }
 
@@ -823,17 +824,21 @@ static int
 mod_read_post(char *buffer, uint count_bytes TSRMLS_DC)
 {
 	int old_index = post_content_index;
-	if (NULL == post_content) {
+	STRLEN post_content_length;
+	char * post_content;
+	if (NULL == post_content_sv) {
 		return 0;
 	}
+	post_content = SvPV( post_content_sv, post_content_length);
+
 	while (post_content_index < post_content_length &&
 	       post_content_index - old_index < count_bytes) {
 		buffer[post_content_index - old_index] = post_content[post_content_index];
 		post_content_index++;
 	}
 	if (post_content_index >= post_content_length) {
-		post_content = NULL; /* memory leak here? */
-		post_content_length = 0;
+		sv_free( post_content_sv );
+		post_content_sv = NULL;
 	}
 	return post_content_index - old_index;
 }
@@ -846,6 +851,7 @@ XS(PHP_done)
 	initialized = 0;
 	hv_destroy_zval( z_objects);
 	sv_free( ksv);
+	sv_free( post_content_sv );
 	z_objects = NULL;
 	ksv = NULL;
 	if ( stdout_hook) {
