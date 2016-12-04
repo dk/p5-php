@@ -810,12 +810,13 @@ mod_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op,
 XS(PHP_set_php_input)
 {
 	dXSARGS;
-	STRLEN l;
 	(void) items;
 	if (items != 1) {
 		croak("PHP_set_php_input: expect exactly 1 input!");
 	}
-	if ( post_content_sv ) sv_free( post_content_sv );
+	if ( post_content_sv ) {
+	  sv_free( post_content_sv );
+	}
 	post_content_sv = newSVsv(ST(0));
 	post_content_index = 0;
 }
