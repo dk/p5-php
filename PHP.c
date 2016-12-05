@@ -855,6 +855,7 @@ XS(PHP_done)
 	sv_free( post_content_sv );
 	z_objects = NULL;
 	ksv = NULL;
+	post_content_sv = NULL;
 	if ( stdout_hook) {
 		sv_free( stdout_hook);
 		stdout_hook = NULL;
@@ -862,6 +863,10 @@ XS(PHP_done)
 	if ( stderr_hook) {
 		sv_free( stderr_hook);
 		stderr_hook = NULL;
+	}
+	if ( header_hook) {
+		sv_free( header_hook);
+		header_hook = NULL;
 	}
 
 #if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 4
